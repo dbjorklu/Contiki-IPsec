@@ -45,6 +45,7 @@
 
 #include "er-coap-13.h"
 #include "er-coap-13-transactions.h"
+#include "er-coap-13-subscription.h"
 #include "er-coap-13-observing.h"
 #include "er-coap-13-separate.h"
 

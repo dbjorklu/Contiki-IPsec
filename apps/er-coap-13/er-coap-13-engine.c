@@ -87,8 +87,8 @@ coap_receive(void)
   static coap_packet_t response[1];
   static coap_transaction_t *transaction = NULL;
 
-  if (uip_newdata()) {
-
+  if (uip_newdata()) 
+  {
     PRINTF("receiving UDP datagram from: ");
     PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
     PRINTF(":%u\n  Length: %u\n  Data: ", uip_ntohs(UIP_UDP_BUF->srcport), uip_datalen() );
@@ -99,9 +99,8 @@ coap_receive(void)
 
     if (coap_error_code==NO_ERROR)
     {
-
       /*TODO duplicates suppression, if required by application */
-
+      
       PRINTF("  Parsed: v %u, t %u, tkl %u, c %u, mid %u\n", message->version, message->type, message->token_len, message->code, message->mid);
       PRINTF("  URL: %.*s\n", message->uri_path_len, message->uri_path);
       PRINTF("  Payload: %.*s\n", message->payload_len, message->payload);
@@ -110,6 +109,7 @@ coap_receive(void)
       if (message->code >= COAP_GET && message->code <= COAP_DELETE)
       {
         /* Use transaction buffer for response to confirmable request. */
+
         if ( (transaction = coap_new_transaction(message->mid, &UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport)) )
         {
           uint32_t block_num = 0;
@@ -132,15 +132,15 @@ coap_receive(void)
           /* mirror token */
           if (message->token_len)
           {
-              coap_set_header_token(response, message->token, message->token_len);
+            coap_set_header_token(response, message->token, message->token_len);
           }
 
           /* get offset for blockwise transfers */
           if (coap_get_header_block2(message, &block_num, NULL, &block_size, &block_offset))
           {
-              PRINTF("Blockwise: block request %lu (%u/%u) @ %lu bytes\n", block_num, block_size, REST_MAX_CHUNK_SIZE, block_offset);
-              block_size = MIN(block_size, REST_MAX_CHUNK_SIZE);
-              new_offset = block_offset;
+            PRINTF("Blockwise: block request %lu (%u/%u) @ %lu bytes\n", block_num, block_size, REST_MAX_CHUNK_SIZE, block_offset);
+            block_size = MIN(block_size, REST_MAX_CHUNK_SIZE);
+            new_offset = block_offset;
           }
 
           /* Invoke resource handler. */
@@ -195,31 +195,26 @@ coap_receive(void)
                 } /* if (blockwise request) */
               } /* no errors/hooks */
             } /* successful service callback */
-
-            /* Serialize response. */
-            if (coap_error_code==NO_ERROR)
-            {
-              if ((transaction->packet_len = coap_serialize_message(response, transaction->packet))==0)
-              {
-                coap_error_code = PACKET_SERIALIZATION_ERROR;
-              }
-            }
-
           }
           else
           {
             coap_error_code = NOT_IMPLEMENTED_5_01;
             coap_error_message = "NoServiceCallbck"; // no a to fit 16 bytes
           } /* if (service callback) */
-
-        } else {
-            coap_error_code = SERVICE_UNAVAILABLE_5_03;
-            coap_error_message = "NoFreeTraBuffer";
+        } 
+        else 
+        {
+          coap_error_code = SERVICE_UNAVAILABLE_5_03;
+          coap_error_message = "NoFreeTraBuffer";
         } /* if (transaction buffer) */
       }
       else
       {
         /* Responses */
+        uint32_t observe = 0;
+        coap_subscription_t *subscription;
+        coap_transaction_t *open_transaction = NULL;
+	transaction = NULL;
         if (message->type==COAP_TYPE_CON && message->code==0)
         {
           PRINTF("Received Ping\n");
@@ -236,28 +231,87 @@ coap_receive(void)
           /* Cancel possible subscriptions. */
           coap_remove_observer_by_mid(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport, message->mid);
         }
-
-        if ( (transaction = coap_get_transaction_by_mid(message->mid)) )
+        else if (coap_get_header_observe(message, &observe)) 
+        {
+          PRINTF("Received a notification on a subscription\n");
+          if (message->type==COAP_TYPE_CON) // notifications can be confirmable or not
+          {  
+            PRINTF("creating ACK for confirmable notification\n");
+            if ( (transaction = coap_new_transaction(message->mid, &UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport))) 
+            {
+              /* Reliable CON requests are answered with an ACK. */
+              coap_init_message(response, COAP_TYPE_ACK, CONTENT_2_05, message->mid);
+              /* mirror token */
+              if (message->token_len) 
+              {
+                coap_set_header_token(response, message->token, message->token_len);
+              } 
+              else 
+              {
+                PRINTF("No token in notification from observed resource?\n");
+              }
+            } 
+            else 
+            {
+              /* TODO: correct to send 5.03? */
+              coap_error_code = SERVICE_UNAVAILABLE_5_03;
+              coap_error_message = "NoFreeTraBuffer";
+            }
+          } /* if (confirmable notification) */
+      
+          if (message->token_len) 
+          {
+            if ((subscription = coap_get_subscription_by_token(message->token, message->token_len))) 
+            {
+              if (message->code == CONTENT_2_05 || message->code == VALID_2_03)
+              { 
+                // now passing the message to the handler that also handled the repsonce of the first subscription GET 
+                subscription->callback(message);
+              }
+              else
+              {
+                // the server sent a non valid notification, indicating that the resource is no longer valid
+                coap_clear_subscription(subscription);
+              }
+            } 
+            else 
+            {
+              PRINTF("No handler found for notification based on token\n");
+            }
+          }
+          else 
+          {
+            PRINTF("No token in notification from observed resource!?\n");
+          } /* notification had a token, which it should */
+        } /* received notification from observed resource */
+     
+        if ( (open_transaction = coap_get_transaction_by_mid(message->mid)) )
         {
           /* Free transaction memory before callback, as it may create a new transaction. */
-          restful_response_handler callback = transaction->callback;
-          void *callback_data = transaction->callback_data;
-          coap_clear_transaction(transaction);
-
+          restful_response_handler callback = open_transaction->callback;
+          void *callback_data = open_transaction->callback_data;
+         
+          coap_clear_transaction(open_transaction); // remove transaction */
+         
           /* Check if someone registered for the response */
-          if (callback) {
+          if (callback) 
+          {
             callback(callback_data, message);
           }
         } /* if (ACKed transaction) */
-        transaction = NULL;
-
       } /* Request or Response */
-
     } /* if (parsed correctly) */
-
+   
     if (coap_error_code==NO_ERROR)
     {
-      if (transaction) coap_send_transaction(transaction);
+      if (transaction) 
+      {
+        if ((transaction->packet_len = coap_serialize_message(response, transaction->packet))==0)
+        {
+          coap_error_code = PACKET_SERIALIZATION_ERROR;
+        }
+        coap_send_transaction(transaction);
+      }
     }
     else if (coap_error_code==MANUAL_RESPONSE)
     {
@@ -267,10 +321,10 @@ coap_receive(void)
     else
     {
       coap_message_type_t reply_type = COAP_TYPE_ACK;
-
+     
       PRINTF("ERROR %u: %s\n", coap_error_code, coap_error_message);
       coap_clear_transaction(transaction);
-
+     
       /* Set to sendable error code. */
       if (coap_error_code >= 192)
       {
@@ -287,9 +341,9 @@ coap_receive(void)
       coap_send_message(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport, uip_appdata, coap_serialize_message(message, uip_appdata));
     }
   } /* if (new data) */
-
   return coap_error_code;
 }
+
 /*----------------------------------------------------------------------------*/
 void
 coap_receiver_init()
@@ -533,6 +587,8 @@ PT_THREAD(coap_blocking_request(struct request_state_t *state, process_event_t e
   static uint8_t more;
   static uint32_t res_block;
   static uint8_t block_error;
+  const uint8_t *token = NULL;
+  uint32_t observe;
 
   state->block_num = 0;
   state->response = NULL;
@@ -588,6 +644,20 @@ PT_THREAD(coap_blocking_request(struct request_state_t *state, process_event_t e
       PT_EXIT(&state->pt);
     }
   } while (more && block_error<COAP_MAX_ATTEMPTS);
+  // if the request contained the observe option we will be receiving notifications 
+  if (coap_get_header_observe(request, &observe)) 
+  {
+    int len;
+    if ((len = coap_get_header_token(request, &token))) 
+    {
+      PRINTF("Will listen to notifications with token 0x%x...\n", token[0]);
+      coap_new_subscription(token, len, request_callback);
+    }  
+    else 
+    { 
+      PRINTF("Observe request without token, what to do?\n");
+    }
+  }
 
   PT_END(&state->pt);
 }
