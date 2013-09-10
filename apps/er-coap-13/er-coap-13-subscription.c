@@ -55,7 +55,7 @@
 #endif
 
 
-MEMB(subscriptions_memb, coap_subscription_t, COAP_MAX_OPEN_TRANSACTIONS);
+MEMB(subscriptions_memb, coap_subscription_t, COAP_MAX_OPEN_SUBSCRIPTIONS);
 LIST(subscriptions_list);
 
 coap_subscription_t *
