@@ -157,6 +157,9 @@ typedef unsigned short uip_stats_t;
 #define PACKETBUF_CONF_HDR_SIZE    0            //RF230 combined driver/mac handles headers internally
 #endif /*RF230BB */
 
+#define UIP_CONF_IPV6 1
+
+
 #if UIP_CONF_IPV6
 #define RIMEADDR_CONF_SIZE        8
 #define UIP_CONF_ICMP6            1
