@@ -141,6 +141,7 @@ typedef unsigned short uip_stats_t;
 #define RDC_CONF_HARDWARE_CSMA   1
 /* Allow MCU sleeping between channel checks */
 #define RDC_CONF_MCU_SLEEP         1
+#define UIP_CONF_IPV6 1
 
 #if UIP_CONF_IPV6
 #define RIMEADDR_CONF_SIZE        8
