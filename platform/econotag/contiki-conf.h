@@ -103,16 +103,16 @@
 /* end of mc1322x specific config. */
 
 /* start of conitki config. */
-#define PLATFORM_HAS_LEDS 1
-#define PLATFORM_HAS_BUTTON 1
+#define PLATFORM_HAS_LEDS 0
+#define PLATFORM_HAS_BUTTON 0
 
 #define RIMEADDR_CONF_SIZE              8
 
 #if WITH_UIP6
 /* Network setup for IPv6 */
 #define NETSTACK_CONF_NETWORK sicslowpan_driver
-#define NETSTACK_CONF_MAC     nullmac_driver 
-#define NETSTACK_CONF_RDC     nullrdc_driver
+#define NETSTACK_CONF_MAC     csma_driver // nullmac_driver 
+#define NETSTACK_CONF_RDC     contikimac_driver // sicslowmac_driver // nullrdc_driver
 #define NETSTACK_CONF_RADIO   contiki_maca_driver
 #define NETSTACK_CONF_FRAMER  framer_802154
 
@@ -123,10 +123,9 @@
 
 #else /* WITH_UIP6 */
 /* Network setup for non-IPv6 (rime). */
-
 #define NETSTACK_CONF_NETWORK rime_driver
 #define NETSTACK_CONF_MAC     csma_driver
-#define NETSTACK_CONF_RDC     sicslowmac_driver
+#define NETSTACK_CONF_RDC     conticimac // sicslowmac_driver
 #define NETSTACK_CONF_RADIO   contiki_maca_driver
 #define NETSTACK_CONF_FRAMER  framer_802154
 
