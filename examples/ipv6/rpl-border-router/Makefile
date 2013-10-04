@@ -1,3 +1,5 @@
+ALLOW_OLD_PLATFORMS=1
+
 CONTIKI_PROJECT=border-router
 all: $(CONTIKI_PROJECT) 
 
@@ -42,6 +44,10 @@ include $(CONTIKI)/Makefile.include
 
 $(CONTIKI)/tools/tunslip6:	$(CONTIKI)/tools/tunslip6.c
 	(cd $(CONTIKI)/tools && $(MAKE) tunslip6)
+
+load:
+	mc1322x-load.pl -f border-router_econotag.bin -t /dev/ttyUSB0
+
 
 connect-router:	$(CONTIKI)/tools/tunslip6
 	sudo $(CONTIKI)/tools/tunslip6 $(PREFIX)
