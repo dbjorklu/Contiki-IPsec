@@ -1,3 +1,7 @@
+OUTFILE=ravenusbstick
+MCU=at90usb1287
+
+
 all:
 	${MAKE} TARGET=avr-ravenusb NOAVRSIZE=1 -f Makefile.ravenusbstick ravenusbstick.elf
 	avr-objcopy -O ihex -R .signature -R .fuse -R .eeprom ravenusbstick.elf ravenusbstick.hex
@@ -7,3 +11,6 @@ clean:
 	${MAKE} -f Makefile.ravenusbstick clean
 	rm -rf obj_avr-ravenusb
 	rm -rf symbols.c symbols.h ravenusbstick.elf ravenusbstick.hex
+
+flash:
+	avrdude -c dragon_jtag -P usb -p $(MCU) -U flash:w:$(OUTFILE).hex
