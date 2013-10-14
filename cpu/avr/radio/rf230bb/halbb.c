@@ -73,7 +73,7 @@ extern uint8_t debugflowsize,debugflow[DEBUGFLOWSIZE];
 
 #include "hal.h"
 
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 #include <avr/io.h>
 #include "atmega128rfa1_registermap.h"
 #else
@@ -88,7 +88,7 @@ volatile extern signed char rf230_last_rssi;
 
 
 /*============================ IMPLEMENTATION ================================*/
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 
 /* AVR1281 with internal RF231 radio */
 #include <avr/interrupt.h>
@@ -158,7 +158,7 @@ inline uint8_t spiWrite(uint8_t byte)
  
 /** \brief  This function initializes the Hardware Abstraction Layer.
  */
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 
 void
 hal_init(void)
@@ -242,7 +242,7 @@ hal_init(void)
 #endif  /* !__AVR__ */
 
 
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 /* Hack for internal radio registers. hal_register_read and hal_register_write are
    handled through defines, but the preprocesser can't parse a macro containing
    another #define with multiple arguments, e.g. using
@@ -399,7 +399,7 @@ hal_subregister_write(uint8_t address, uint8_t mask, uint8_t position,
 void
 hal_frame_read(hal_rx_frame_t *rx_frame)
 {
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 
     uint8_t frame_length,*rx_data,*rx_buffer;
  
@@ -500,7 +500,7 @@ hal_frame_read(hal_rx_frame_t *rx_frame)
 void
 hal_frame_write(uint8_t *write_buffer, uint8_t length)
 {
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
     uint8_t *tx_buffer;
     tx_buffer=(uint8_t *)0x180;  //start of fifo in i/o space
     /* Write frame length, including the two byte checksum */
@@ -632,7 +632,7 @@ volatile char rf230interruptflag;
 #define INTERRUPTDEBUG(arg)
 #endif
 
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 /* The atmega128rfa1 has individual interrupts for the integrated radio'
  * Whichever are enabled by the RF230 driver must be present even if not used!
  */
