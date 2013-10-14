@@ -78,6 +78,8 @@
 #define ZIGBIT			4
 #define IRIS			5
 #define ATMEGA128RFA1   6
+#define ATMEGA256RFR2   7
+
 
 #if PLATFORM_TYPE == RCB_B
 /* 1281 rcb */
@@ -141,6 +143,12 @@
 #   define SLPTRPIN   (0x04)
 
 #elif PLATFORM_TYPE == ATMEGA128RFA1
+/* ATmega1281 with internal AT86RF231 radio */
+#   define SLPTRPORT  TRXPR
+#   define SLPTRPIN   1
+
+#elif PLATFORM_TYPE == ATMEGA256RFR2
+
 /* ATmega1281 with internal AT86RF231 radio */
 #   define SLPTRPORT  TRXPR
 #   define SLPTRPIN   1
@@ -210,6 +218,7 @@
  * if TICKTIMER is defined as 0.
  * \{
  */
+
 #if defined(__AVR__)
 #define CAT(x, y)      x##y
 #define DDR(x)         CAT(DDR,  x)
@@ -233,7 +242,7 @@
  *       that the source code can directly use.
  * \{
  */
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 
 #define hal_set_rst_low( )    ( TRXPR &= ~( 1 << TRXRST ) ) /**< This macro pulls the RST pin low. */
 #define hal_set_rst_high( )   ( TRXPR |= ( 1 << TRXRST ) ) /**< This macro pulls the RST pin high. */
@@ -367,7 +376,7 @@ typedef struct{
 void hal_init( void );
 
 /* Hack for atmega128rfa1 with integrated radio. Access registers directly, not through SPI */
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 //#define hal_register_read(address) _SFR_MEM8((uint16_t)address)
 #define hal_register_read(address) address
 uint8_t hal_subregister_read( uint16_t address, uint8_t mask, uint8_t position );
