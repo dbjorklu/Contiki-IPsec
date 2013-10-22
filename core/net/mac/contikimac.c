@@ -58,7 +58,7 @@
 #ifdef CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION
 #define WITH_PHASE_OPTIMIZATION      CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION
 #else /* CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION */
-#define WITH_PHASE_OPTIMIZATION      1
+#define WITH_PHASE_OPTIMIZATION      0
 #endif /* CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION */
 /* Two byte header added to allow recovery of padded short packets */
 /* Wireshark will not understand such packets at present */
@@ -69,7 +69,7 @@
 #endif
 /* More aggressive radio sleeping when channel is busy with other traffic */
 #ifndef WITH_FAST_SLEEP
-#define WITH_FAST_SLEEP              1
+#define WITH_FAST_SLEEP              0
 #endif
 /* Radio does CSMA and autobackoff */
 #ifndef RDC_CONF_HARDWARE_CSMA
@@ -113,7 +113,7 @@ struct hdr {
  * Define SYNC_CYCLE_STARTS to ensure an integral number of checks per second.
  */
 #if RTIMER_ARCH_SECOND & (RTIMER_ARCH_SECOND - 1)
-#define SYNC_CYCLE_STARTS                    1
+#define SYNC_CYCLE_STARTS                    0
 #endif
 
 /* Are we currently receiving a burst? */
@@ -234,8 +234,10 @@ static struct pt pt;
 static volatile uint8_t contikimac_is_on = 0;
 static volatile uint8_t contikimac_keep_radio_on = 0;
 
-static volatile unsigned char we_are_sending = 0;
-static volatile unsigned char radio_is_on = 0;
+volatile unsigned char we_are_sending = 0;
+volatile unsigned char radio_is_on = 0;
+volatile unsigned char contikiMAC_ready = 0;
+
 
 #define DEBUG 0
 #if DEBUG
@@ -300,7 +302,7 @@ off(void)
   }
 }
 /*---------------------------------------------------------------------------*/
-static volatile rtimer_clock_t cycle_start;
+volatile rtimer_clock_t cycle_start;
 static char powercycle(struct rtimer *t, void *ptr);
 static void
 schedule_powercycle(struct rtimer *t, rtimer_clock_t time)
@@ -321,7 +323,7 @@ schedule_powercycle(struct rtimer *t, rtimer_clock_t time)
   }
 }
 /*---------------------------------------------------------------------------*/
-static void
+void
 schedule_powercycle_fixed(struct rtimer *t, rtimer_clock_t fixed_time)
 {
   int r;
@@ -417,10 +419,13 @@ powercycle(struct rtimer *t, void *ptr)
              false positive: a spurious radio interference that was not
              caused by an incoming packet. */
         if(NETSTACK_RADIO.channel_clear() == 0) {
+          //PORTB ^= _BV(PB4); 
+          PORTB = 0xff; 
           packet_seen = 1;
           break;
         }
-        powercycle_turn_radio_off();
+        //if (count == CCA_COUNT_MAX - 1)
+          powercycle_turn_radio_off();
       }
       schedule_powercycle_fixed(t, RTIMER_NOW() + CCA_SLEEP_TIME);
       PT_YIELD(&pt);
@@ -491,12 +496,9 @@ powercycle(struct rtimer *t, void *ptr)
 	 ensure an occasional wake cycle or foreground processing will
 	 be blocked until a packet is detected */
 #if RDC_CONF_MCU_SLEEP
-      static uint8_t sleepcycle;
-      if((sleepcycle++ < 16) && !we_are_sending && !radio_is_on) {
-        rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
-      } else {
-        sleepcycle = 0;
+      if(!we_are_sending && !radio_is_on) {
         schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+        contikiMAC_ready = 1;
         PT_YIELD(&pt);
       }
 #else
@@ -576,7 +578,7 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
     }
   } else {
 #if UIP_CONF_IPV6
-    PRINTDEBUG("contikimac: send unicast to %02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
+    /*PRINTDEBUG("contikimac: send unicast to %02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[0],
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[1],
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[2],
@@ -584,7 +586,7 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[4],
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[5],
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[6],
-               packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[7]);
+               packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[7]);*/
 #else /* UIP_CONF_IPV6 */
     PRINTDEBUG("contikimac: send unicast to %u.%u\n",
                packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[0],
@@ -782,12 +784,12 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
           PRINTF("contikimac: collisions while sending\n");
           collisions++;
       }
-      wt = RTIMER_NOW();
-      while(RTIMER_CLOCK_LT(RTIMER_NOW(), wt + INTER_PACKET_INTERVAL)) { }
+      //wt = RTIMER_NOW();
+      //while(RTIMER_CLOCK_LT(RTIMER_NOW(), wt + INTER_PACKET_INTERVAL)) { }
 #else /* RDC_CONF_HARDWARE_ACK */
      /* Wait for the ACK packet */
-      wt = RTIMER_NOW();
-      while(RTIMER_CLOCK_LT(RTIMER_NOW(), wt + INTER_PACKET_INTERVAL)) { }
+      //wt = RTIMER_NOW();
+      //while(RTIMER_CLOCK_LT(RTIMER_NOW(), wt + INTER_PACKET_INTERVAL)) { }
 
       if(!is_broadcast && (NETSTACK_RADIO.receiving_packet() ||
                            NETSTACK_RADIO.pending_packet() ||
@@ -1017,6 +1019,8 @@ input_packet(void)
 #endif /* CONTIKIMAC_CONF_COMPOWER */
 
       PRINTDEBUG("contikimac: data (%u)\n", packetbuf_datalen());
+
+      PORTB = 0x00; 
       NETSTACK_MAC.input();
       return;
     } else {
@@ -1076,9 +1080,20 @@ duty_cycle(void)
   return (1ul * CLOCK_SECOND * CYCLE_TIME) / RTIMER_ARCH_SECOND;
 }
 /*---------------------------------------------------------------------------*/
+static void
+set_interrupt(void)
+{
+ if(contikimac_is_on) {
+    PRINTF("Working %u\n", RTIMER_NOW());
+    rtimer_reset(&rt, RTIMER_NOW() + 1, 1,
+               (void (*)(struct rtimer *, void *))powercycle, NULL);
+  }
+}
+
 const struct rdc_driver contikimac_driver = {
   "ContikiMAC",
   init,
+  set_interrupt,
   qsend_packet,
   qsend_list,
   input_packet,
@@ -1093,3 +1108,4 @@ contikimac_debug_print(void)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+
