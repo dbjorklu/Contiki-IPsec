@@ -55,7 +55,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hal.h"
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 #include "atmega128rfa1_registermap.h"
 #else
 #include "at86rf230_registermap.h"
@@ -68,7 +68,7 @@
 #define RF230_REVB                              ( 2 )
 #define SUPPORTED_MANUFACTURER_ID               ( 31 )
 
-#if defined(__AVR_ATmega128RFA1__)
+#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
 #define RF230_SUPPORTED_INTERRUPT_MASK          ( 0xFF )
 #else
 /* RF230 does not support RX_START interrupts in extended mode, but it seems harmless to always enable it. */
