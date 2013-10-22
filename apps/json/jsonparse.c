@@ -32,6 +32,7 @@
 #include "jsonparse.h"
 #include <stdlib.h>
 #include <string.h>
+#include "uip.h"
 
 /*--------------------------------------------------------------------*/
 static int
@@ -213,6 +214,38 @@ jsonparse_get_value_as_int(struct jsonparse_state *state)
   }
   return atoi(&state->json[state->vstart]);
 }
+
+static void set_ip_str(uip_ipaddr_t *ipaddr, const char *ip_str, int len) {
+  char *start = ip_str;
+  char *stop = ip_str;
+  int i;
+  printf("set_ip_str %.*s\n", len, ip_str);
+
+  for (i=0; i < 8; i++) {
+    while (*(++stop) != ':' && (*stop - *start) < len) {
+    }
+    char tmp = *stop;
+    *stop = '\0'; // make the hex addr part a nullterminated string
+    ((uint16_t*)ipaddr)[i] = uip_htons((uint16_t)strtol(start, NULL, 16));
+    printf("got -%s- |%x|", start, ((uint16_t*)ipaddr)[i]);
+    *stop = tmp; // restore it
+    start = ++stop;
+    }
+}
+
+int jsonparse_get_value_as_uip6(struct jsonparse_state *state, uip_ipaddr_t *ipaddr)
+{
+  int i;
+  
+  if (state->vtype == 0) { 
+    return 0;
+  }
+//  state->json[state->vstart + state->vlen] = '\0';
+  set_ip_str(ipaddr, state->json + state->vstart, state->vlen);
+
+  return state->vtype;
+} 
+
 /*--------------------------------------------------------------------*/
 long
 jsonparse_get_value_as_long(struct jsonparse_state *state)
@@ -231,7 +264,12 @@ jsonparse_strcmp_value(struct jsonparse_state *state, const char *str)
   if(state->vtype == 0) {
     return -1;
   }
-  return strncmp(str, &state->json[state->vstart], state->vlen);
+  printf("%s == %.*s %d\n", str, state->vlen, &state->json[state->vstart], state->vlen);
+  //char *tree_val =  &state->json[state->vstart];
+  if (strlen(str) != state->vlen)
+    return -1;
+  else
+    return (strncmp(str, &state->json[state->vstart], state->vlen));
 }
 /*--------------------------------------------------------------------*/
 int
