@@ -1,6 +1,8 @@
-OUTFILE=udp-server.avr-raven
+#OUTFILE=udp-server.avr-raven
+OUTFILE=udp-client.avr-atmega256rfr2
 
-MCU=atmega1284p
+# MCU=atmega1284p
+MCU=atmega256rfr2
 
 
 all: udp-server udp-client
@@ -22,3 +24,8 @@ load:
 ravenflash:
 	avrdude -c dragon_jtag -P usb -p $(MCU) -U flash:w:$(OUTFILE).hex
 
+rfr2flash:
+        # avr-objcopy -O ihex -R .eeprom -R .fuse -R .signature $(OUTFILE) $(OUTFILE).hex
+	avr-objcopy -j .text -j .data -O ihex $(OUTFILE) $(OUTFILE).hex
+	avr-size -C --mcu=m256rfr2 $(OUTFILE)
+	avrdude -c dragon_isp -P usb -p m256rfr2 -B3 -U flash:w:$(OUTFILE).hex
