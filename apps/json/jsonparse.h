@@ -34,6 +34,7 @@
 
 #include "contiki-conf.h"
 #include "json.h"
+#include "uip.h"
 
 #ifdef JSONPARSE_CONF_MAX_DEPTH
 #define JSONPARSE_MAX_DEPTH JSONPARSE_CONF_MAX_DEPTH
@@ -75,6 +76,8 @@ int jsonparse_copy_value(struct jsonparse_state *state, char *buf,
 
 /* get the current JSON value parsed as an int */
 int jsonparse_get_value_as_int(struct jsonparse_state *state);
+
+int jsonparse_get_value_as_uip6(struct jsonparse_state *state, uip_ipaddr_t *ipaddr);
 
 /* get the current JSON value parsed as a long */
 long jsonparse_get_value_as_long(struct jsonparse_state *state);
