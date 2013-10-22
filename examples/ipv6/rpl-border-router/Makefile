@@ -1,5 +1,8 @@
 ALLOW_OLD_PLATFORMS=1
 
+MCU=atmega256rfr2
+
+
 CONTIKI_PROJECT=border-router
 all: $(CONTIKI_PROJECT) 
 
@@ -42,15 +45,47 @@ endif
 
 include $(CONTIKI)/Makefile.include
 
+OUTFILE=border-router.avr-atmega256rfr2
+
+
 $(CONTIKI)/tools/tunslip6:	$(CONTIKI)/tools/tunslip6.c
 	(cd $(CONTIKI)/tools && $(MAKE) tunslip6)
 
 load:
 	mc1322x-load.pl -f border-router_econotag.bin -t /dev/ttyUSB0
 
+rfr2flash:
+        # avr-objcopy -O ihex -R .eeprom -R .fuse -R .signature $(OUTFILE) $(OUTFILE).hex
+	avr-objcopy -j .text -j .data -O ihex $(OUTFILE) $(OUTFILE).hex
+	avr-size -C --mcu=m256rfr2 $(OUTFILE)
+	avrdude -c dragon_isp -P usb -p m256rfr2 -B3 -U flash:w:$(OUTFILE).hex
+
+# read fuse
+# extendend
+read_efuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U efuse:r:efuse.hex:i
+# high
+read_hfuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U hfuse:r:hfuse.hex:i
+# low
+read_lfuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U lfuse:r:lfuse.hex:i
+
+# write fuse
+# extendend
+write_efuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U efuse:w:fuse/efuse.hex:i
+# high
+write_hfuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U hfuse:w:fuse/hfuse.hex:i
+# low
+write_lfuse:
+	avrdude -c dragon_isp -P usb -p m256rfr2 -U lfuse:w:fuse/lfuse.hex:i
+
 
 connect-router:	$(CONTIKI)/tools/tunslip6
-	sudo $(CONTIKI)/tools/tunslip6 $(PREFIX)
+	sudo $(CONTIKI)/tools/tunslip6 -B57600 $(PREFIX)
+#	sudo $(CONTIKI)/tools/tunslip6 -B38400 $(PREFIX)
 
 connect-router-cooja:	$(CONTIKI)/tools/tunslip6
 	sudo $(CONTIKI)/tools/tunslip6 -a 127.0.0.1 $(PREFIX)
