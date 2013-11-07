@@ -34,12 +34,13 @@
 CONTIKI_CPU = $(CONTIKI)/cpu/6502
 include $(CONTIKI_CPU)/Makefile.6502
 
-SHADOW_RAM_SOURCEFILES  = etimer.c procinit.c uip.c
-SHADOW_RAM2_SOURCEFILES = clock.c uip_arch.c uip_arp.c
+SHADOW_RAM_SOURCEFILES  = etimer.c uip.c
+SHADOW_RAM2_SOURCEFILES = clock.c error.c uip_arch.c uip_arp.c
 
 # Set target-specific variable values
 ${addprefix $(OBJECTDIR)/,${call oname, $(SHADOW_RAM_SOURCEFILES)}}:  CFLAGS += --code-name SHADOW_RAM
 ${addprefix $(OBJECTDIR)/,${call oname, $(SHADOW_RAM2_SOURCEFILES)}}: CFLAGS += --code-name SHADOW_RAM2
+
 ifeq ($(MAKECMDGOALS),disk)
   ifndef DIR2ATR
     ${error DIR2ATR not defined! You must specify where dir2atr resides}
