@@ -420,7 +420,7 @@ powercycle(struct rtimer *t, void *ptr)
              caused by an incoming packet. */
         if(NETSTACK_RADIO.channel_clear() == 0) {
           //PORTB ^= _BV(PB4); 
-          PORTB = 0xff; 
+          //PORTB = 0xff; 
           packet_seen = 1;
           break;
         }
@@ -1020,7 +1020,6 @@ input_packet(void)
 
       PRINTDEBUG("contikimac: data (%u)\n", packetbuf_datalen());
 
-      PORTB = 0x00; 
       NETSTACK_MAC.input();
       return;
     } else {
