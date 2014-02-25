@@ -35,3 +35,10 @@ write_hfuse:
 # low
 write_lfuse:
 	avrdude -c dragon_isp -P usb -p m256rfr2 -U lfuse:w:fuse/lfuse.hex:i
+
+rfr2flash:
+        # avr-objcopy -O ihex -R .eeprom -R .fuse -R .signature $(OUTFILE) $(OUTFILE).hex
+	avr-objcopy -j .text -j .data -O ihex $(OUTFILE) $(OUTFILE).hex
+	avr-size -C --mcu=atmega256rfr2 $(OUTFILE)
+	# avrdude -c dragon_isp -P usb -p atmega256rfr2 -B3 -U flash:w:$(OUTFILE).hex
+	avrdude -c dragon_isp -P usb -p atmega256rfr2 -B2 -U flash:w:$(OUTFILE).hex
