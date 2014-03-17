@@ -41,6 +41,16 @@ typedef uint32_t rtimer_clock_t;
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
+ * \name Serial Boot Loader Backdoor configuration
+ *
+ * @{
+ */
+#ifndef FLASH_CCA_CONF_BOOTLDR_BACKDOOR
+#define FLASH_CCA_CONF_BOOTLDR_BACKDOOR	1 /**<Enable the boot loader backdoor */
+#endif
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
  * \name USB 'core' configuration
  *
  * Those values are not meant to be modified by the user, except where stated
@@ -268,6 +278,16 @@ typedef uint32_t rtimer_clock_t;
 #ifndef IEEE_ADDR_CONF_ADDRESS
 #define IEEE_ADDR_CONF_ADDRESS { 0x00, 0x12, 0x4B, 0x00, 0x89, 0xAB, 0xCD, 0xEF }
 #endif
+
+/**
+ * \brief Location of the IEEE address in the InfoPage when
+ * IEEE_ADDR_CONF_HARDCODED is defined as 0
+ * 0 => Use the primary address location
+ * 1 => Use the secondary address location
+ */
+#ifndef IEEE_ADDR_CONF_USE_SECONDARY_LOCATION
+#define IEEE_ADDR_CONF_USE_SECONDARY_LOCATION 0
+#endif
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -311,7 +331,7 @@ typedef uint32_t rtimer_clock_t;
 #if UIP_CONF_IPV6
 /* Addresses, Sizes and Interfaces */
 /* 8-byte addresses here, 2 otherwise */
-#define RIMEADDR_CONF_SIZE                   8
+#define LINKADDR_CONF_SIZE                   8
 #define UIP_CONF_LL_802154                   1
 #define UIP_CONF_LLH_LEN                     0
 #define UIP_CONF_NETIF_MAX_ADDRESSES         3

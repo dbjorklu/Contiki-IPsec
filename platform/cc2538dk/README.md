@@ -44,8 +44,8 @@ To start using Contiki, you will need the following:
 Different tasks can be performed under different operating systems. The table below summarises what task can be performed on which OS:
 
                        Windows     Linux     OS-X
-    Building Contiki      Y          Y         N
-    Node Programming      Y          Y         N
+    Building Contiki      Y          Y         Y
+    Node Programming      Y          Y         Y
     Console output
       (UART)              Y          Y         Y
       (USB CDC-ACM)       Y          Y         Y
@@ -56,7 +56,7 @@ Different tasks can be performed under different operating systems. The table be
       (UART)              N          Y         Y
       (USB CDC-ACM)       N          Y         Y
 
-The platform has been developed and tested under Windows XP, Mac OS X 10.7 and Ubuntu 12.04 and 12.10. The matrix above has been populated based on information for those OSs.
+The platform has been developed and tested under Windows XP, Mac OS X 10.9.1 and Ubuntu 12.04 and 12.10. The matrix above has been populated based on information for those OSs.
 
 Install a Toolchain
 -------------------
@@ -72,13 +72,10 @@ The toolchain used to build contiki is arm-gcc, also used by other arm-based Con
     Thread model: single
     gcc version 4.3.2 (Sourcery G++ Lite 2008q3-66)
 
-If the toolchain is not installed, download and install one of the following versions:
+The platform is currently being used/tested with the following toolchains:
 
-* GNU Tools for ARM Embedded Processors. Works nicely on OS X. <https://launchpad.net/gcc-arm-embedded>
+* GNU Tools for ARM Embedded Processors. This is the recommended version. Works nicely on OS X. <https://launchpad.net/gcc-arm-embedded>
 * Alternatively, you can use this older version for Linux. At the time of writing, this is the version used by Contiki's regression tests. <https://sourcery.mentor.com/public/gnu_toolchain/arm-none-eabi/arm-2008q3-66-arm-none-eabi-i686-pc-linux-gnu.tar.bz2>
-* Lastly: Sourcery Codebench Lite for ARM processors from the URL below. Make sure to select the EABI Release. <http://www.mentor.com/embedded-software/sourcery-tools/sourcery-codebench/editions/lite-edition/>
-
-The first one is newer. The second has been in use for a longer period of time and the Contiki code has been tested with it more extensively.
 
 Drivers
 -------
@@ -196,9 +193,18 @@ On Linux:
 
 Software to Program the Nodes
 -----------------------------
-On Windows, nodes can be programmed with TI's ArmProgConsole or the [SmartRF Flash Programmer][smart-rf-flashprog]. The README should be self-explanatory. With ArmProgConsole, upload the file with a `.bin` extension.
+The CC2538 can be programmed via the jtag interface or via the serial boot loader on the chip.
 
-On Linux, nodes can be programmed with TI's [UniFlash] tool. With UniFlash, use the file with `.elf` extension.
+* On Windows:
+    * Nodes can be programmed with TI's ArmProgConsole or the [SmartRF Flash Programmer 2][smart-rf-flashprog]. The README should be self-explanatory. With ArmProgConsole, upload the file with a `.bin` extension. (jtag + serial)
+    * Nodes can also be programmed via the serial boot loader in the cc2538. In `tools/cc2538-bsl/` you can find `cc2538-bsl.py` this is a python script that can download firmware to your node via a serial connection. If you use this option you just need to make sure you have a working version of python installed. You can read the README in the same directory for more info. (serial)
+
+* On Linux:
+    * Nodes can be programmed with TI's [UniFlash] tool. With UniFlash, use the file with `.elf` extension. (jtag + serial)
+    * Nodes can also be programmed via the serial boot loader in the cc2538. No extra software needs to be installed. (serial)
+
+* On OSX:
+    * The `cc2538-bsl.py` script in `tools/cc2538-bsl/` is the only option. No extra software needs to be installed. (serial)
 
 The file with a `.cc2538dk` extension is a copy of the `.elf` file.
 
@@ -234,6 +240,8 @@ It is recommended to start with the `cc2538-demo` and `timer-test` examples unde
 
 Strictly speaking, to build them you need to run `make TARGET=cc2538dk`. However, the example directories contain a `Makefile.target` which is automatically included and specifies the correct `TARGET=` argument. Thus, for examples under the `cc2538dk` directory, you can simply run `make`.
 
+If you want to upload the compiled firmware to a node via the serial boot loader you need to manually enable the boot loader and then use `make cc2538-demo.upload`. On the SmartRF06 board you enable the boot loader by resetting the board (EM RESET button) while holding the `select` button. (The boot loader backdoor needs to be enabled on the chip for this to work, see README in the `tools/cc2538-bsl` directory for more info)
+
 For the `cc2538-demo`, the comments at the top of `cc2538-demo.c` describe in detail what the example does.
 
 Node IEEE/RIME/IPv6 Addresses
@@ -246,7 +254,7 @@ To configure the IEEE address source location (Info Page or hard-coded), use the
 * 0: Info Page
 * 1: Hard-coded
 
-If `IEEE_ADDR_CONF_HARDCODED` is defined as 1, the IEEE address will take its value from the `IEEE_ADDR_CONF_ADDRESS` define.
+If `IEEE_ADDR_CONF_HARDCODED` is defined as 1, the IEEE address will take its value from the `IEEE_ADDR_CONF_ADDRESS` define. If `IEEE_ADDR_CONF_HARDCODED` is defined as 0, the IEEE address can come from either the primary or secondary location in the Info Page. To use the secondary address, define `IEEE_ADDR_CONF_USE_SECONDARY_LOCATION` as 1.
 
 Additionally, you can override the IEEE's 2 LSBs, by using the `NODEID` make variable. The value of `NODEID` will become the value of the `IEEE_ADDR_NODE_ID` pre-processor define. If `NODEID` is not defined, `IEEE_ADDR_NODE_ID` will not get defined either. For example:
 
@@ -423,11 +431,11 @@ Setting this define to 1 will automatically set the following to 0:
 * `UART_CONF_ENABLE`
 * `STARTUP_CONF_VERBOSE`
 
-Further Code Size Reduction
----------------------------
-The build system currently uses optimization level `-O2`. Further code size reduction can be achieved by replacing `-O2` with `-Os` in `cpu/cc2538/Makefile.cc2538`. However, this is not selected as default because images generated with gcc version 4.7.2 (Sourcery CodeBench Lite) are broken for unknown reasons.
+Code Size Optimisations
+-----------------------
+The build system currently uses optimization level `-Os`, which is controlled indirectly through the value of the `SMALL` make variable. This value can be overridden by example makefiles, or it can be changed directly in `platform/cc2538dk/Makefile.cc2538dk`.
 
-If you are using gcc version 4.3.2 (Sourcery G++ Lite), you should be able to switch to `-Os` without problems.
+Historically, the `-Os` flag has caused problems with some toolchains. If you are using one of the toolchains documented in this README, you should be able to use it without issues. If for whatever reason you do come across problems, try setting `SMALL=0` or replacing `-Os` with `-O2` in `cpu/cc2538/Makefile.cc2538`.
 
 Doxygen Documentation
 =====================

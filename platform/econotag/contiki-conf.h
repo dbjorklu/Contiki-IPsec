@@ -106,7 +106,7 @@
 #define PLATFORM_HAS_LEDS 0
 #define PLATFORM_HAS_BUTTON 0
 
-#define RIMEADDR_CONF_SIZE              8
+#define LINKADDR_CONF_SIZE              8
 
 #if WITH_UIP6
 /* Network setup for IPv6 */
@@ -125,7 +125,7 @@
 /* Network setup for non-IPv6 (rime). */
 #define NETSTACK_CONF_NETWORK rime_driver
 #define NETSTACK_CONF_MAC     csma_driver
-#define NETSTACK_CONF_RDC     conticimac // sicslowmac_driver
+#define NETSTACK_CONF_RDC     nullrdc_driver
 #define NETSTACK_CONF_RADIO   contiki_maca_driver
 #define NETSTACK_CONF_FRAMER  framer_802154
 
@@ -170,7 +170,7 @@
 
 #ifdef WITH_UIP6
 
-#define RIMEADDR_CONF_SIZE              8
+#define LINKADDR_CONF_SIZE              8
 
 #define UIP_CONF_LL_802154              1
 #define UIP_CONF_LLH_LEN                0
