@@ -1,12 +1,16 @@
+OUTFILE=hello-world.avr-atmega256rfr2
+
 CONTIKI_PROJECT = hello-world
 all: $(CONTIKI_PROJECT)
+	avr-objcopy -j .text -j .data -O ihex $(OUTFILE) $(OUTFILE).hex
+
 
 #UIP_CONF_IPV6=1
 
 CONTIKI = ../..
 include $(CONTIKI)/Makefile.include
 
-OUTFILE=hello-world.avr-atmega256rfr2
+
 
 flash:
 	# avr-objcopy -O ihex -R .eeprom -R .fuse -R .signature $(OUTFILE) $(OUTFILE).hex
@@ -42,3 +46,6 @@ rfr2flash:
 	avr-size -C --mcu=atmega256rfr2 $(OUTFILE)
 	# avrdude -c dragon_isp -P usb -p atmega256rfr2 -B3 -U flash:w:$(OUTFILE).hex
 	avrdude -c dragon_isp -P usb -p atmega256rfr2 -B2 -U flash:w:$(OUTFILE).hex
+
+prog:
+	gtkterm -p/dev/ttyUSB0 -s38400 -wXon -f$(OUTFILE).hex

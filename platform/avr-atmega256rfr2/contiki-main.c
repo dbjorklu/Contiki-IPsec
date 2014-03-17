@@ -185,24 +185,13 @@ void initialize(void)
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
-#if !RF230BB_CONF_LEDONPORTE1   //Conflicts with USART0
-#ifdef RAVEN_LCD_INTERFACE
-  rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  rs232_set_input(0,raven_lcd_serial_input);
-#else
+
   /* Generic or slip connection on uart0 */
-  rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-#endif
-#endif 
+  rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
 
   /* Second rs232 port for debugging or slip alternative */
-  rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  /* Redirect stdout */
-/*#if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
-  rs232_redirect_stdout(RS232_PORT_1);
-  #else
-  rs232_redirect_stdout(RS232_PORT_0);
-  #endif*/
+  rs232_init(RS232_PORT_1, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+
   rs232_redirect_stdout(RS232_PORT_0);
   clock_init();
 
@@ -273,7 +262,7 @@ void initialize(void)
   if (params_get_eui64(addr.u8)) {
     PRINTA("Random EUI64 address generated\n");
   }
-  //  addr.u8[2] = 6;
+  addr.u8[2] = 3;
 #if UIP_CONF_IPV6 
   
   memcpy(&uip_lladdr.addr, &addr.u8, sizeof(rimeaddr_t));
@@ -431,11 +420,11 @@ ipaddr_add(const uip_ipaddr_t *addr)
 int
 main(void)
 {
-  DDRB |= _BV(DDRB4);
+//  DDRB |= _BV(DDRB4);
  
-  PORTB = 0xff; //_BV(PB4);
-  _delay_ms(5000);
-  PORTB = 00; //_BV(PB4);
+  //PORTB = 0xff; //_BV(PB4);
+  //_delay_ms(5000);
+  //PORTB = 00; //_BV(PB4);
 
 
 #if UIP_CONF_IPV6
@@ -449,17 +438,17 @@ main(void)
 
     //while(1)
       
-  
-    if(MCUSR & (1<<PORF )) PRINTD("Power-on resett.\n");
-    if(MCUSR & (1<<EXTRF)) PRINTD("External resett!\n");
-    if(MCUSR & (1<<BORF )) PRINTD("Brownout resett!\n");
-    if(MCUSR & (1<<WDRF )) PRINTD("Watchdog resett!\n");
+    if(MCUSR & (1<<PORF )) PRINTD("Power-on reset!.\n");
+    if(MCUSR & (1<<EXTRF)) PRINTD("External reset!\n");
+    if(MCUSR & (1<<BORF )) PRINTD("Brownout reset!\n");
+    if(MCUSR & (1<<WDRF )) PRINTD("Watchdog reset!\n");
     if(MCUSR & (1<<JTRF )) PRINTD("JTAG resett!\n");
     MCUSR = 0;
  
     nProcesses = process_run();
 
 #if RDC_CONF_MCU_SLEEP
+
     if (nProcesses == 0 && contikiMAC_ready) {
       timeToSleep = CYCLE_TIME - (RTIMER_NOW() - cycle_start);
 
