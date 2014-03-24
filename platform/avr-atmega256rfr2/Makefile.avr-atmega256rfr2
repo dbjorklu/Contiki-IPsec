@@ -2,7 +2,8 @@ CONTIKI_TARGET_DIRS = . apps net loader dev
 
 CONTIKI_CORE=contiki-main
 CONTIKI_TARGET_MAIN = ${CONTIKI_CORE}.o
-CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c temperature-sensor.c battery-sensor.c sht21-sensor.c sht21.c radio-sensor.c
+CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c temperature-sensor.c battery-sensor.c sht21-sensor.c sht21.c radio-sensor.c linkaddr.c
+
 
 
 #Needed for slip
