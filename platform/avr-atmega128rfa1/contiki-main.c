@@ -38,7 +38,7 @@
 #define PRINTA(...)
 #endif
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #define PRINTD(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
 #else
@@ -56,7 +56,7 @@
 #include "loader/symtab.h"
 
 #include "params.h"
-#include "radio/rf230bb/rf230bb.h"
+// #include "radio/rf230bb/rf230bb.h"
 #include "net/mac/frame802154.h"
 #include "net/mac/framer-802154.h"
 #include "net/ipv6/sicslowpan.h"
@@ -87,6 +87,15 @@
 #include "net/routing/rimeroute.h"
 #include "net/rime/rime-udp.h"
 #endif
+
+// sleep from main
+#define CYCLE_TIME (RTIMER_ARCH_SECOND / NETSTACK_RDC_CHANNEL_CHECK_RATE)
+#include "sys/rtimer.h"
+#include "rtimer-arch.h"
+
+extern rtimer_clock_t cycle_start;
+extern volatile unsigned char contikiMAC_ready;
+extern volatile unsigned char we_are_sending;
 
 #include "net/rime/rime.h"
 
@@ -170,30 +179,20 @@ rng_get_uint8(void) {
 /*------Done in a subroutine to keep main routine stack usage small--------*/
 void initialize(void)
 {
-  watchdog_init();
-  watchdog_start();
+  //watchdog_init();
+  //watchdog_start();
 
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
-#if !RF230BB_CONF_LEDONPORTE1   //Conflicts with USART0
-#ifdef RAVEN_LCD_INTERFACE
-  rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  rs232_set_input(0,raven_lcd_serial_input);
-#else
+
   /* Generic or slip connection on uart0 */
   rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-#endif
-#endif
 
   /* Second rs232 port for debugging or slip alternative */
-  rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  /* Redirect stdout */
-#if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
-  rs232_redirect_stdout(RS232_PORT_1);
-#else
+  rs232_init(RS232_PORT_1, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+
   rs232_redirect_stdout(RS232_PORT_0);
-#endif
   clock_init();
 
   if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");
@@ -423,24 +422,38 @@ main(void)
   uip_ds6_nbr_t *nbr;
 #endif /* UIP_CONF_IPV6 */
   initialize();
+  int nProcesses;
+  short timeToSleep;
 
   while(1) {
-    process_run();
-    watchdog_periodic();
 
-    /* Turn off LED after a while */
-    if (ledtimer) {
-      if (--ledtimer==0) {
-#if RF230BB_CONF_LEDONPORTE1
-        PORTE&=~(1<<PE1);
-#endif
-#if defined(RAVEN_LCD_INTERFACE)&&0
-       /* ledtimer can be set by received ping; ping the other way for testing */
-       extern void raven_ping6(void);         
-       raven_ping6();
-#endif
+    //while(1)
+      
+    if(MCUSR & (1<<PORF )) PRINTD("Power-on reset!.\n");
+    if(MCUSR & (1<<EXTRF)) PRINTD("External reset!\n");
+    if(MCUSR & (1<<BORF )) PRINTD("Brownout reset!\n");
+    if(MCUSR & (1<<WDRF )) PRINTD("Watchdog reset!\n");
+    if(MCUSR & (1<<JTRF )) PRINTD("JTAG resett!\n");
+    MCUSR = 0;
+ 
+    nProcesses = process_run();
+
+#if RDC_CONF_MCU_SLEEP
+
+    if (nProcesses == 0 && contikiMAC_ready) {
+      timeToSleep = CYCLE_TIME - (RTIMER_NOW() - cycle_start);
+
+      if (timeToSleep > 0){
+        rtimer_arch_sleep(timeToSleep);
       }
+
+      contikiMAC_ready = 0;
+      NETSTACK_RDC.set_interrupt();
     }
+#endif    
+
+     watchdog_periodic();
+
 
 #if 0
 /* Various entry points for debugging in the AVR Studio simulator.
