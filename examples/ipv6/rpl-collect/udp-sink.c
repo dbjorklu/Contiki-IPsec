@@ -82,14 +82,14 @@ collect_common_send(void)
 void
 collect_common_net_init(void)
 {
-#if CONTIKI_TARGET_Z1
+/*#if CONTIKI_TARGET_Z1
   uart0_set_input(serial_line_input_byte);
 #else
   uart1_set_input(serial_line_input_byte);
 #endif
   serial_line_init();
 
-  PRINTF("I am sink!\n");
+  PRINTF("I am sink!\n");*/
 }
 /*---------------------------------------------------------------------------*/
 static void
