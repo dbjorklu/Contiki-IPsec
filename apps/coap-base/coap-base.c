@@ -70,6 +70,15 @@ neighbours_get(struct jsontree_context *js_ctx)
   return 0;
 }
 
+static int
+routes_get(struct jsontree_context *js_ctx)
+{
+  char buf[20];
+  snprintf(buf, 20, "a mote");
+  jsontree_write_string(js_ctx, buf);
+  return 0;
+}
+
 struct jsontree_callback neighbours_callback =
   JSONTREE_CALLBACK(neighbours_get, NULL);
 
@@ -169,6 +178,7 @@ static struct jsontree_string dimmer_unit = JSONTREE_STRING("[0-15]");
 JSONTREE_OBJECT(radio_tree,
                 JSONTREE_PAIR("rssi", &rssi_callback),
                 JSONTREE_PAIR("neighbours", &neighbours_callback),
+                JSONTREE_PAIR("routes", &routes_callback),
                 JSONTREE_PAIR("channel", &channel_callback));
                 
 #ifdef BATTERY_OPERATED
@@ -519,6 +529,7 @@ void coap_base_init() {
   */
   rest_activate_resource(&resource_system_rssi);
   rest_activate_resource(&resource_system_neighbours);
+  rest_activate_resource(&resource_system_routes);
   rest_activate_resource(&resource_system_channel);
 #ifdef BATTERY_OPERATED
   rest_activate_resource(&resource_system_battery);
