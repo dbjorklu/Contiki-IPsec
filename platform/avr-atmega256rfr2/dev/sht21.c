@@ -41,7 +41,7 @@
 #include <util/twi.h>
 
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
 #include <stdio.h>
@@ -93,12 +93,10 @@ void sht21_init()
 // Send start signal
 static void TWIStart(void)
 {
-  PRINTF("TWi start\n");
   TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
   while ((TWCR & (1<<TWINT)) == 0) {
     PRINTF(".");
   }
-  PRINTF("TWi started\n");
 }
 
 //send stop signal
@@ -113,7 +111,6 @@ static void TWIWrite(uint8_t u8data)
   TWDR = u8data;
   TWCR = (1<<TWINT)|(1<<TWEN);
   while ((TWCR & (1<<TWINT)) == 0);
-  PRINTF("twi wrote\n");
 }
 
 static uint8_t TWIReadACK(void)

@@ -115,6 +115,13 @@ struct jsontree_array {
     JSON_TYPE_OBJECT,							\
     sizeof(jsontree_pair_##name)/sizeof(struct jsontree_pair),          \
     jsontree_pair_##name }
+    
+#define JSONTREE_ARRAY(name, count)                                     \
+  static struct jsontree_value *jsontree_value##name[count];            \
+  static struct jsontree_array name = {                                 \
+    JSON_TYPE_ARRAY,              \
+    count,                        \
+    jsontree_value##name }         
 
 void jsontree_setup(struct jsontree_context *js_ctx,
                     struct jsontree_value *root, int (* putchar)(int));
@@ -127,6 +134,8 @@ void jsontree_write_int(const struct jsontree_context *js_ctx, int value);
 void jsontree_write_atom(const struct jsontree_context *js_ctx,
                          const char *text);
 void jsontree_write_string(const struct jsontree_context *js_ctx,
+                           const char *text);
+void jsontree_dags_write_string(const struct jsontree_context *js_ctx,
                            const char *text);
 int jsontree_print_next(struct jsontree_context *js_ctx);
 struct jsontree_value *jsontree_find_next(struct jsontree_context *js_ctx,

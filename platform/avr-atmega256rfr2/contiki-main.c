@@ -51,19 +51,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <dev/watchdog.h>
+#include "net/mac/sicslowmac/sicslowmac.h"
 
 #include "loader/symbols-def.h"
 #include "loader/symtab.h"
 
 #include "params.h"
-// #include "radio/rf230bb/rf230bb.h"
+#include "radio/rf230bb/rf230bb.h"
 #include "net/mac/frame802154.h"
 #include "net/mac/framer-802154.h"
-#include "net/sicslowpan.h"
+#include "net/ipv6/sicslowpan.h"
 
 #include "contiki.h"
 #include "contiki-net.h"
 #include "contiki-lib.h"
+#include "net/ip/uip.h"
 
 #include "dev/rs232.h"
 #include "dev/serial-line.h"
@@ -96,8 +98,10 @@
 extern rtimer_clock_t cycle_start;
 extern volatile unsigned char contikiMAC_ready;
 extern volatile unsigned char we_are_sending;
+extern linkaddr_t linkaddr_node_addr;
 
-#include "net/rime.h"
+
+#include "net/rime/rime.h"
 
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
@@ -128,6 +132,7 @@ void rtimercycle(void) {rtimerflag=1;}
 
 uint16_t ledtimer;
 
+ 
 /*-------------------------------------------------------------------------*/
 /*----------------------Configuration of the .elf file---------------------*/
 #if 1
@@ -195,11 +200,11 @@ void initialize(void)
   rs232_redirect_stdout(RS232_PORT_0);
   clock_init();
 
-  if(MCUSR & (1<<PORF )) PRINTD("Power-on reseta.\n");
-  if(MCUSR & (1<<EXTRF)) PRINTD("External reseta!\n");
-  if(MCUSR & (1<<BORF )) PRINTD("Brownout reseta!\n");
-  if(MCUSR & (1<<WDRF )) PRINTD("Watchdog reseta!\n");
-  if(MCUSR & (1<<JTRF )) PRINTD("JTAG reseta!\n");
+  if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");
+  if(MCUSR & (1<<EXTRF)) PRINTD("External reset!\n");
+  if(MCUSR & (1<<BORF )) PRINTD("Brownout reset!\n");
+  if(MCUSR & (1<<WDRF )) PRINTD("Watchdog reset!\n");
+  if(MCUSR & (1<<JTRF )) PRINTD("JTAG reset!\n");
 
 #if STACKMONITOR
   /* Simple stack pointer highwater monitor. Checks for magic numbers in the main
@@ -233,7 +238,7 @@ void initialize(void)
     clock_init();
   }
 #endif 
- 
+
   PRINTA("\n*******Booting %s*******\n",CONTIKI_VERSION_STRING);
 
 /* rtimers needed for radio cycling */
@@ -254,39 +259,40 @@ void initialize(void)
  * causing the initial packets to be ignored after a short-cycle restart.
  */
   random_init(rng_get_uint8());
-
-  /* Set addresses BEFORE starting tcpip process */
-
-  rimeaddr_t addr;
-
-  if (params_get_eui64(addr.u8)) {
-    PRINTA("Random EUI64 address generated\n");
-  }
-  addr.u8[2] = 3;
-#if UIP_CONF_IPV6 
+  netstack_init();
   
-  memcpy(&uip_lladdr.addr, &addr.u8, sizeof(rimeaddr_t));
-#elif WITH_NODE_ID
+  
+  /* Set addresses BEFORE starting tcpip process */
+  /* Setting link addr to all 3's */
+  int kk;
+  for (kk=0; kk<LINKADDR_SIZE;kk++)
+    linkaddr_node_addr.u8[kk]=5; 
+
+#if UIP_CONF_IPV6 
+  memcpy(&uip_lladdr.addr, &linkaddr_node_addr, sizeof(uip_lladdr.addr));
+#endif
+
+/*#elif WITH_NODE_ID
   node_id=get_panaddr_from_eeprom();
   addr.u8[1]=node_id&0xff;
   addr.u8[0]=(node_id&0xff00)>>8;
   PRINTA("Node ID from eeprom: %X\n",node_id);
-#endif  
-  rimeaddr_set_node_addr(&addr); 
-  
-  rf230_set_pan_addr(params_get_panid(),params_get_panaddr(),(uint8_t *)&addr.u8);
+  #endif  */
+  // linkaddr_set_node_addr(&addr); 
+
+  rf230_set_pan_addr(params_get_panid(),params_get_panaddr(),(uint8_t *)&linkaddr_node_addr.u8);
   rf230_set_channel(params_get_channel());
   rf230_set_txpower(params_get_txpower());
 
 #if UIP_CONF_IPV6
-  PRINTA("EUI-64 MAC: %x-%x-%x-%x-%x-%x-%x-%x\n",addr.u8[0],addr.u8[1],addr.u8[2],addr.u8[3],addr.u8[4],addr.u8[5],addr.u8[6],addr.u8[7]);
+//  PRINTA("EUI-64 MAC: %x-%x-%x-%x-%x-%x-%x-%x\n",addr.u8[0],addr.u8[1],addr.u8[2],addr.u8[3],addr.u8[4],addr.u8[5],addr.u8[6],addr.u8[7]);
 #else
-  PRINTA("MAC address ");
+  /* PRINTA("MAC address ");
   uint8_t i;
-  for (i=sizeof(rimeaddr_t); i>0; i--){
+  for (i=sizeof(linkaddr_t); i>0; i--){
     PRINTA("%x:",addr.u8[i-1]);
   }
-  PRINTA("\n");
+  PRINTA("\n");*/
 #endif
 
   /* Initialize stack protocols */
@@ -309,11 +315,21 @@ void initialize(void)
 #endif /* ANNOUNCE_BOOT */
 
   process_start(&tcpip_process, NULL);
-
-#ifdef RAVEN_LCD_INTERFACE
-  process_start(&raven_lcd_process, NULL);
+  printf("lla %d\n", uip_lladdr.addr[0]);
+#if UIP_CONF_IPV6
+  printf("Tentative link-local IPv6 address ");
+  {
+    uip_ds6_addr_t *lladdr;
+    int i;
+    lladdr = uip_ds6_get_link_local(-1);
+    for(i = 0; i < 7; ++i) {
+      printf("%02x%02x:", lladdr->ipaddr.u8[i * 2],
+             lladdr->ipaddr.u8[i * 2 + 1]);
+    }
+    printf("%02x%02x\n", lladdr->ipaddr.u8[14], lladdr->ipaddr.u8[15]);
+  }
 #endif
-
+ 
   /* Autostart other processes */
   autostart_start(autostart_processes);
 
@@ -346,42 +362,8 @@ void initialize(void)
 
 /*--------------------------Announce the configuration---------------------*/
 #if ANNOUNCE_BOOT
-#if AVR_WEBSERVER
-  { uint8_t i;
-    char buf[80];
-    unsigned int size;
-
-    for (i=0;i<UIP_DS6_ADDR_NB;i++) {
-      if (uip_ds6_if.addr_list[i].isused) {	  
-        httpd_cgi_sprint_ip6(uip_ds6_if.addr_list[i].ipaddr,buf);
-        PRINTA("IPv6 Address: %s\n",buf);
-      }
-    }
-    cli();
-    eeprom_read_block (buf,eemem_server_name, sizeof(eemem_server_name));
-    sei();
-    buf[sizeof(eemem_server_name)]=0;
-    PRINTA("%s",buf);
-    cli();
-    eeprom_read_block (buf,eemem_domain_name, sizeof(eemem_domain_name));
-    sei();
-    buf[sizeof(eemem_domain_name)]=0;
-    size=httpd_fs_get_size();
-#ifndef COFFEE_FILES
-    PRINTA(".%s online with fixed %u byte web content\n",buf,size);
-#elif COFFEE_FILES==1
-    PRINTA(".%s online with static %u byte EEPROM file system\n",buf,size);
-#elif COFFEE_FILES==2
-    PRINTA(".%s online with dynamic %u KB EEPROM file system\n",buf,size>>10);
-#elif COFFEE_FILES==3
-    PRINTA(".%s online with static %u byte program memory file system\n",buf,size);
-#elif COFFEE_FILES==4
-    PRINTA(".%s online with dynamic %u KB program memory file system\n",buf,size>>10);
-#endif /* COFFEE_FILES */
-  }
-#else
   PRINTA("Online\n");
-#endif
+
 #endif /* ANNOUNCE_BOOT */
 
 #if RF230BB_CONF_LEDONPORTE1
@@ -412,21 +394,13 @@ ipaddr_add(const uip_ipaddr_t *addr)
   }
 }
 #endif
-#include <util/delay.h> 
+
 /*-------------------------------------------------------------------------*/
 /*------------------------- Main Scheduler loop----------------------------*/
 /*-------------------------------------------------------------------------*/
-
 int
 main(void)
 {
-//  DDRB |= _BV(DDRB4);
- 
-  //PORTB = 0xff; //_BV(PB4);
-  //_delay_ms(5000);
-  //PORTB = 00; //_BV(PB4);
-
-
 #if UIP_CONF_IPV6
   uip_ds6_nbr_t *nbr;
 #endif /* UIP_CONF_IPV6 */
@@ -437,17 +411,17 @@ main(void)
   while(1) {
 
     //while(1)
-      
-    if(MCUSR & (1<<PORF )) PRINTD("Power-on reset!.\n");
+    
+    /*if(MCUSR & (1<<PORF )) PRINTD("Power-on reset!.\n");
     if(MCUSR & (1<<EXTRF)) PRINTD("External reset!\n");
     if(MCUSR & (1<<BORF )) PRINTD("Brownout reset!\n");
     if(MCUSR & (1<<WDRF )) PRINTD("Watchdog reset!\n");
     if(MCUSR & (1<<JTRF )) PRINTD("JTAG resett!\n");
-    MCUSR = 0;
+    MCUSR = 0;*/
  
     nProcesses = process_run();
 
-#if RDC_CONF_MCU_SLEEP
+#if CONTICIMAC
 
     if (nProcesses == 0 && contikiMAC_ready) {
       timeToSleep = CYCLE_TIME - (RTIMER_NOW() - cycle_start);
@@ -461,7 +435,7 @@ main(void)
     }
 #endif    
 
-     watchdog_periodic();
+    watchdog_periodic();
 
 
 #if 0
@@ -535,12 +509,12 @@ main(void)
           raven_ping6();
         }
 #endif
-
+      
 #if ROUTES && UIP_CONF_IPV6
         if ((clocktime%ROUTES)==2) {
-      
+        
           extern uip_ds6_netif_t uip_ds6_if;
-
+        
           uint8_t i,j;
           PRINTF("\nAddresses [%u max]\n",UIP_DS6_ADDR_NB);
           for (i=0;i<UIP_DS6_ADDR_NB;i++) {
@@ -558,7 +532,7 @@ main(void)
             PRINTF("\n");
             j=0;
           }
-          if (j) PRINTF("  <none>");
+          //if (j) PRINTF("  <none>");
           PRINTF("\nRoutes [%u max]\n",UIP_DS6_ROUTE_NB);
           {
             uip_ds6_route_t *r;

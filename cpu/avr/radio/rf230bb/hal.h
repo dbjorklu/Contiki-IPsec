@@ -218,7 +218,6 @@
  * if TICKTIMER is defined as 0.
  * \{
  */
-
 #if defined(__AVR__)
 #define CAT(x, y)      x##y
 #define DDR(x)         CAT(DDR,  x)

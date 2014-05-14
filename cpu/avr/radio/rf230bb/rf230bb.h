@@ -55,8 +55,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hal.h"
-#if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega256RFR2__)
+#if defined(__AVR_ATmega128RFA1__) 
 #include "atmega128rfa1_registermap.h"
+#elif defined(__AVR_ATmega256RFR2__)
+#include "atmega256rfr2_registermap.h"
 #else
 #include "at86rf230_registermap.h"
 #endif

@@ -37,9 +37,8 @@
  * \author
  *         David Kopf <dak664@embarqmail.com>
  */
-
-#ifndef __CONTIKI_CONF_H__
-#define __CONTIKI_CONF_H__
+#ifndef CONTIKI_CONF_H_
+#define CONTIKI_CONF_H_
 
 /* Platform name, type, and MCU clock rate */
 #define PLATFORM_NAME  "RFA1"
@@ -141,10 +140,11 @@ typedef unsigned short uip_stats_t;
 #define RDC_CONF_HARDWARE_CSMA   1
 /* Allow MCU sleeping between channel checks */
 #define RDC_CONF_MCU_SLEEP         1
-#define UIP_CONF_IPV6 1
+
+#define UIP_CONF_IPV6  1
 
 #if UIP_CONF_IPV6
-#define RIMEADDR_CONF_SIZE        8
+#define LINKADDR_CONF_SIZE        8
 #define UIP_CONF_ICMP6            1
 #define UIP_CONF_UDP              1
 #define UIP_CONF_TCP              1
@@ -152,7 +152,7 @@ typedef unsigned short uip_stats_t;
 #define SICSLOWPAN_CONF_COMPRESSION SICSLOWPAN_COMPRESSION_HC06
 #else
 /* ip4 should build but is largely untested */
-#define RIMEADDR_CONF_SIZE        2
+#define LINKADDR_CONF_SIZE        2
 #define NETSTACK_CONF_NETWORK     rime_driver
 #endif
 
@@ -182,12 +182,10 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_TCP_SPLIT       1
 #define UIP_CONF_DHCP_LIGHT      1
 
-
 #define UIP_CONF_BUFFER_SIZE		240
 
-   
+ 
 #if 0 /* No radio cycling */
-
 #define NETSTACK_CONF_MAC         nullmac_driver
 #define NETSTACK_CONF_RDC         sicslowmac_driver
 #define NETSTACK_CONF_FRAMER      framer_802154
@@ -232,15 +230,18 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_DS6_ADDR_NBU     3
 #define UIP_CONF_DS6_MADDR_NBU    0
 #define UIP_CONF_DS6_AADDR_NBU    0
-
+ 
 
 #elif 1  /* Contiki-mac radio cycling */
 //#define NETSTACK_CONF_MAC         nullmac_driver
 /* csma needed for burst mode at present. Webserver won't work without it */
+#define CONTICIMAC 1
 #define NETSTACK_CONF_MAC         csma_driver
-#define NETSTACK_CONF_RDC          contikimac_driver
+#define NETSTACK_CONF_RDC         contikimac_driver
 /* Default is two CCA separated by 500 usec */
 #define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE   8
+#define RF230_CONF_CCA_THRES    -85
+ 
 /* Wireshark won't decode with the header, but padded packets will fail ipv6 checksum */
 #define CONTIKIMAC_CONF_WITH_CONTIKIMAC_HEADER 0
 /* So without the header this needed for RPL mesh to form */
@@ -263,7 +264,7 @@ typedef unsigned short uip_stats_t;
 #define SICSLOWPAN_CONF_FRAG      1
 #define SICSLOWPAN_CONF_MAXAGE    3
 /* 211 bytes per queue buffer. Contikimac burst mode needs 15 for a 1280 byte MTU */
-#define QUEUEBUF_CONF_NUM         4
+#define QUEUEBUF_CONF_NUM         15
 /* 54 bytes per queue ref buffer */
 #define QUEUEBUF_CONF_REF_NUM     2
 /* Allocate remaining RAM. Not much left due to queuebuf increase  */
@@ -355,4 +356,4 @@ typedef unsigned short uip_stats_t;
 #include PROJECT_CONF_H
 #endif
 
-#endif /* __CONTIKI_CONF_H__ */
+#endif /* CONTIKI_CONF_H_ */

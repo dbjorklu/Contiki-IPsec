@@ -19,3 +19,12 @@ CFLAGS+=-DPERIOD=$(PERIOD)
 endif
 
 include $(CONTIKI)/Makefile.include
+
+OUTFILE=udp-client.avr-atmega256rfr2
+
+
+rfr2flash:
+        # avr-objcopy -O ihex -R .eeprom -R .fuse -R .signature $(OUTFILE) $(OUTFILE).hex
+	avr-objcopy -j .text -j .data -O ihex $(OUTFILE) $(OUTFILE).hex
+	avr-size -C --mcu=atmega256rfr2 $(OUTFILE)
+	avrdude -c dragon_isp -P usb -p atmega256rfr2 -B3 -U flash:w:$(OUTFILE).hex
