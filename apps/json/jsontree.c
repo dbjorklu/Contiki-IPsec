@@ -62,6 +62,23 @@ jsontree_write_atom(const struct jsontree_context *js_ctx, const char *text)
     }
   }
 }
+
+void
+jsontree_dags_write_string(const struct jsontree_context *js_ctx, const char *text)
+{
+  //js_ctx->putchar('"');
+  if(text != NULL) {
+    while(*text != '\0') {
+      /*if(*text == '"') {
+        js_ctx->putchar('\\');
+        }*/
+      js_ctx->putchar(*text++);
+    }
+  }
+  //js_ctx->putchar('"');
+}
+
+
 /*---------------------------------------------------------------------------*/
 void
 jsontree_write_string(const struct jsontree_context *js_ctx, const char *text)
