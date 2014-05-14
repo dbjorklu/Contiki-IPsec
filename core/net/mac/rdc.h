@@ -44,13 +44,15 @@
 #include "contiki-conf.h"
 #include "net/mac/mac.h"
 
+
+
+
 /* List of packets to be sent by RDC layer */
 struct rdc_buf_list {
   struct rdc_buf_list *next;
   struct queuebuf *buf;
   void *ptr;
 };
-
 
 /**
  * The structure of a RDC (radio duty cycling) driver in Contiki.
@@ -60,9 +62,6 @@ struct rdc_driver {
 
   /** Initialize the RDC driver */
   void (* init)(void);
-
-  /** Set interrupt */
-  void (* set_interrupt)(void);
 
   /** Send a packet from the Rime buffer  */
   void (* send)(mac_callback_t sent_callback, void *ptr);
@@ -81,6 +80,9 @@ struct rdc_driver {
 
   /** Returns the channel check interval, expressed in clock_time_t ticks. */
   unsigned short (* channel_check_interval)(void);
+
+  /** Set interrupt */
+  void (* set_interrupt)(void);
 };
 
 #endif /* RDC_H_ */

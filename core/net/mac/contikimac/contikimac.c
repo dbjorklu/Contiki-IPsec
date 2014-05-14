@@ -229,6 +229,13 @@ static int we_are_receiving_burst = 0;
 #define ACK_LEN 3
 
 #include <stdio.h>
+#include "sys/rtimer.h"
+extern int
+rtimer_reset(struct rtimer *rtimer, rtimer_clock_t time,
+             rtimer_clock_t duration,
+             rtimer_callback_t func, void *ptr);
+
+
 static struct rtimer rt;
 static struct pt pt;
 
@@ -1058,22 +1065,23 @@ static void
 set_interrupt(void)
 {
  if(contikimac_is_on) {
-    PRINTF("Working %u\n", RTIMER_NOW());
-    rtimer_reset(&rt, RTIMER_NOW() + 1, 1,
-               (void (*)(struct rtimer *, void *))powercycle, NULL);
-  }
+   //PRINTF("Working %u\n", RTIMER_NOW());
+   rtimer_reset(&rt, RTIMER_NOW() + 1, 1,
+                (void (*)(struct rtimer *, void *))powercycle, NULL);
+ }
 }
+
 
 const struct rdc_driver contikimac_driver = {
   "ContikiMAC",
   init,
-  set_interrupt,
   qsend_packet,
   qsend_list,
   input_packet,
   turn_on,
   turn_off,
   duty_cycle,
+  set_interrupt,
 };
 /*---------------------------------------------------------------------------*/
 uint16_t
