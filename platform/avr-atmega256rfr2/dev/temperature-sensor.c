@@ -30,11 +30,9 @@
 
 /**
  * \file
- *         Sensor driver for reading the built-in temperature sensor in the CPU.
+ *         Sensor driver for reading the temperature sensor in the Atmel Xplained Pro Board
  * \author
- *         Adam Dunkels <adam@sics.se>
- *         Joakim Eriksson <joakime@sics.se>
- *         Niclas Finne <nfi@sics.se>
+ *         Dag Björklund <dag@iki.fi>
  */
 
 #include "dev/temperature-sensor.h"
