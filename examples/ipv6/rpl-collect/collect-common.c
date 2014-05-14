@@ -39,7 +39,7 @@
 #include "lib/random.h"
 #include "net/netstack.h"
 #include "dev/serial-line.h"
-#include "dev/leds.h"
+//#include "dev/leds.h"
 #include "collect-common.h"
 
 #include <stdio.h>
@@ -101,7 +101,7 @@ collect_common_recv(const linkaddr_t *originator, uint8_t seqno, uint8_t hops,
     printf(" %u", data);
   }
   printf("\n");
-  leds_blink();
+  //leds_blink();
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(collect_common_process, ev, data)
