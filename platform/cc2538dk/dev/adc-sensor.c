@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2013, ADVANSEE - http://www.advansee.com/
+ * Benoît Thébaudeau <benoit.thebaudeau@advansee.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,90 +29,83 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** \addtogroup cc2538-char-io
- * @{ */
 /**
+ * \addtogroup cc2538dk-adc-sensor
+ * @{
+ *
  * \file
- *     Implementation of arch-specific functions required by the dbg_io API in
- *     cpu/arm/common/dbg-io
+ *  Driver for the SmartRF06EB ADC
  */
 #include "contiki.h"
+#include "sys/clock.h"
+#include "dev/ioc.h"
+#include "dev/gpio.h"
+#include "dev/adc.h"
+#include "dev/adc-sensor.h"
 
-#include "dbg.h"
-#include "dev/uart.h"
-#include "usb/usb-serial.h"
+#include <stdint.h>
 
-#include <stdio.h>
+#define ADC_ALS_PWR_PORT_BASE    GPIO_PORT_TO_BASE(ADC_ALS_PWR_PORT)
+#define ADC_ALS_PWR_PIN_MASK     GPIO_PIN_MASK(ADC_ALS_PWR_PIN)
+#define ADC_ALS_OUT_PIN_MASK     GPIO_PIN_MASK(ADC_ALS_OUT_PIN)
 /*---------------------------------------------------------------------------*/
-#ifndef DBG_CONF_USB
-#define DBG_CONF_USB 0
-#endif
-
-#if DBG_CONF_USB
-#define write_byte(b) usb_serial_writeb(b)
-#define flush()       usb_serial_flush()
-#else
-#define write_byte(b) uart_write_byte(DBG_CONF_UART, b)
-#define flush()
-#endif
-/*---------------------------------------------------------------------------*/
-#undef putchar
-#undef puts
-
-#define SLIP_END     0300
-/*---------------------------------------------------------------------------*/
-int
-putchar(int c)
+static int
+value(int type)
 {
-#if DBG_CONF_SLIP_MUX
-  static char debug_frame = 0;
+  uint8_t channel;
+  int16_t res;
 
-  if(!debug_frame) {
-    write_byte(SLIP_END);
-    write_byte('\r');
-    debug_frame = 1;
+  switch(type) {
+  case ADC_SENSOR_VDD_3:
+    channel = SOC_ADC_ADCCON_CH_VDD_3;
+    break;
+  case ADC_SENSOR_TEMP:
+    channel = SOC_ADC_ADCCON_CH_TEMP;
+    break;
+  case ADC_SENSOR_ALS:
+    channel = SOC_ADC_ADCCON_CH_AIN0 + ADC_ALS_OUT_PIN;
+    GPIO_SET_PIN(ADC_ALS_PWR_PORT_BASE, ADC_ALS_PWR_PIN_MASK);
+    clock_delay_usec(2000);
+    break;
+  default:
+    return 0;
   }
-#endif
 
-  write_byte(c);
+  res = adc_get(channel, SOC_ADC_ADCCON_REF_INT, SOC_ADC_ADCCON_DIV_512);
 
-  if(c == '\n') {
-#if DBG_CONF_SLIP_MUX
-    write_byte(SLIP_END);
-    debug_frame = 0;
-#endif
-    dbg_flush();
+  if(type == ADC_SENSOR_ALS) {
+    GPIO_CLR_PIN(ADC_ALS_PWR_PORT_BASE, ADC_ALS_PWR_PIN_MASK);
   }
-  return c;
+
+  return res;
 }
 /*---------------------------------------------------------------------------*/
-unsigned int
-dbg_send_bytes(const unsigned char *s, unsigned int len)
+static int
+configure(int type, int value)
 {
-  unsigned int i = 0;
+  switch(type) {
+  case SENSORS_HW_INIT:
+    GPIO_SOFTWARE_CONTROL(ADC_ALS_PWR_PORT_BASE, ADC_ALS_PWR_PIN_MASK);
+    GPIO_SET_OUTPUT(ADC_ALS_PWR_PORT_BASE, ADC_ALS_PWR_PIN_MASK);
+    GPIO_CLR_PIN(ADC_ALS_PWR_PORT_BASE, ADC_ALS_PWR_PIN_MASK);
+    ioc_set_over(ADC_ALS_PWR_PORT, ADC_ALS_PWR_PIN, IOC_OVERRIDE_DIS);
 
-  while(s && *s != 0) {
-    if(i >= len) {
-      break;
-    }
-    putchar(*s++);
-    i++;
+    GPIO_SOFTWARE_CONTROL(GPIO_A_BASE, ADC_ALS_OUT_PIN_MASK);
+    GPIO_SET_INPUT(GPIO_A_BASE, ADC_ALS_OUT_PIN_MASK);
+    ioc_set_over(GPIO_A_NUM, ADC_ALS_OUT_PIN, IOC_OVERRIDE_ANA);
+
+    adc_init();
+    break;
   }
-  return i;
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
-int
-puts(const char *s)
+static int
+status(int type)
 {
-  unsigned int i = 0;
-
-  while(s && *s != 0) {
-    putchar(*s++);
-    i++;
-  }
-  putchar('\n');
-  return i;
+  return 1;
 }
 /*---------------------------------------------------------------------------*/
+SENSORS_SENSOR(adc_sensor, ADC_SENSOR, value, configure, status);
 
 /** @} */
