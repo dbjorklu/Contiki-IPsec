@@ -184,8 +184,8 @@ rng_get_uint8(void) {
 /*------Done in a subroutine to keep main routine stack usage small--------*/
 void initialize(void)
 {
-  //watchdog_init();
-  //watchdog_start();
+  watchdog_init();
+  watchdog_start();
 
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.

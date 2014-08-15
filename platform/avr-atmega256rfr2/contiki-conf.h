@@ -40,6 +40,11 @@
 #ifndef CONTIKI_CONF_H_
 #define CONTIKI_CONF_H_
 
+
+// using EEPROM for all applications for now
+#define COFFEE_FILES 1
+#define COFFEE_ADDRESS            0x400
+
 /* Platform name, type, and MCU clock rate */
 #define PLATFORM_NAME  "RFA1"
 #define PLATFORM_TYPE  ATMEGA256RFR2
@@ -147,7 +152,7 @@ typedef unsigned short uip_stats_t;
 #define LINKADDR_CONF_SIZE        8
 #define UIP_CONF_ICMP6            1
 #define UIP_CONF_UDP              1
-#define UIP_CONF_TCP              1
+//#define UIP_CONF_TCP              1
 #define NETSTACK_CONF_NETWORK     sicslowpan_driver
 #define SICSLOWPAN_CONF_COMPRESSION SICSLOWPAN_COMPRESSION_HC06
 #else

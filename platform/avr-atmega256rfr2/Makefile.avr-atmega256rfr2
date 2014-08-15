@@ -4,6 +4,8 @@ CONTIKI_CORE=contiki-main
 CONTIKI_TARGET_MAIN = ${CONTIKI_CORE}.o
 CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c battery-sensor.c sht21-sensor.c sht21.c radio-sensor.c 
 
+#The avr cpu makefile will also add these files if COFFEE_FILES is specified.
+CONTIKI_TARGET_SOURCEFILES += cfs-coffee.c cfs-coffee-arch.c
  
 
 #Needed for slip
