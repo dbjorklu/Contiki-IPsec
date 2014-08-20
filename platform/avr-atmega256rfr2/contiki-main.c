@@ -184,9 +184,6 @@ rng_get_uint8(void) {
 /*------Done in a subroutine to keep main routine stack usage small--------*/
 void initialize(void)
 {
-  watchdog_init();
-  watchdog_start();
-
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -332,7 +329,7 @@ void initialize(void)
  
   /* Autostart other processes */
   autostart_start(autostart_processes);
-
+ 
   /*---If using coffee file system create initial web content if necessary---*/
 #if COFFEE_FILES
   int fa = cfs_open( "/index.html", CFS_READ);
@@ -342,11 +339,17 @@ void initialize(void)
     cfs_coffee_format();
     PRINTA("Done!\n");
     fa = cfs_open( "/index.html", CFS_WRITE);
-    int r = cfs_write(fa, &"It works!", 9);
+    int r = cfs_write(fa, &"It Works!!", 10);
     if (r<0) PRINTA("Can''t create /index.html!\n");
     cfs_close(fa);
+    
 //  fa = cfs_open("upload.html"), CFW_WRITE);
 // <html><body><form action="upload.html" enctype="multipart/form-data" method="post"><input name="userfile" type="file" size="50" /><input value="Upload" type="submit" /></form></body></html>
+  } else {
+    char buf[15];
+    int r = cfs_read(fa, buf, 15);
+    buf[r]='\0';
+    PRINTF("cfs_read %s\n", buf);
   }
 #endif /* COFFEE_FILES */
 
@@ -392,7 +395,7 @@ ipaddr_add(const uip_ipaddr_t *addr)
       PRINTF("%x",a);
     }
   }
-}
+}  
 #endif
 
 /*-------------------------------------------------------------------------*/
@@ -400,11 +403,17 @@ ipaddr_add(const uip_ipaddr_t *addr)
 /*-------------------------------------------------------------------------*/
 int
 main(void)
-{
+{ 
+
 #if UIP_CONF_IPV6
   uip_ds6_nbr_t *nbr;
 #endif /* UIP_CONF_IPV6 */
+  
   initialize();
+
+  watchdog_init();
+  watchdog_start();
+
   int nProcesses;
   short timeToSleep;
 
