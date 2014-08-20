@@ -120,7 +120,6 @@ void avr_eeprom_erase(uint16_t sector);
 #undef COFFEE_ADDRESS
 //#define COFFEE_ADDRESS            128000
 #define COFFEE_ADDRESS            0x1F400
-fd
 
 #define COFFEE_PAGES              (1024-(COFFEE_ADDRESS/COFFEE_PAGE_SIZE)-32)
 //#define COFFEE_PAGES              (480-(COFFEE_ADDRESS/COFFEE_PAGE_SIZE)-32)
@@ -168,7 +167,8 @@ fd
 #define COFFEE_READ(buf, size, offset) \
         avr_flash_read(offset, (uint8_t *) buf, size)
 
-#define COFFEE_ERASE(sector) avr_flash_erase(sector)
+#define COFFEE_ERASE(sector) \
+        avr_flash_erase(sector)
 
 void avr_flash_erase(coffee_page_t sector);
 void avr_flash_read (CFS_CONF_OFFSET_TYPE addr, uint8_t *buf, CFS_CONF_OFFSET_TYPE size);

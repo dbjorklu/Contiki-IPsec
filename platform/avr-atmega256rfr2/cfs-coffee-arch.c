@@ -46,7 +46,7 @@
 
 #include "cfs-coffee-arch.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
@@ -430,7 +430,7 @@ avr_flash_read(CFS_CONF_OFFSET_TYPE addr, uint8_t *buf, CFS_CONF_OFFSET_TYPE siz
   unsigned char *bufo=(unsigned char *)buf;
   uint8_t i;
   uint16_t w=addr32>>1;   //Show progmem word address for debug
-  //PRINTF("r0x%04x(%u) ",w,size);
+  PRINTF("r0x%04x(%u) ",w,size);
 #endif
 #ifndef FLASH_WORD_READS
   for (;isize>0;isize--) {
@@ -479,52 +479,45 @@ avr_flash_read(CFS_CONF_OFFSET_TYPE addr, uint8_t *buf, CFS_CONF_OFFSET_TYPE siz
  Erase the flash page(s) corresponding to the coffee sector.
  This is done by calling the write routine with a null buffer and any address
  within each page of the sector (we choose the first byte).
-*/ // BOOTLOADER_SECTION would be better off named NRWW_SECTION
+ */
 BOOTLOADER_SECTION
 void avr_flash_erase(coffee_page_t sector) {
-  coffee_page_t i;
-  //printf("erase sector %d\n", sector);
+	coffee_page_t i;
 
 #if FLASH_COMPLEMENT_DATA
+	uint32_t addr32;
+	volatile uint8_t sreg;
 
-  uint32_t addr32;
-  volatile uint8_t sreg;
-  
-  // Disable interrupts.
-  sreg = SREG;
-  cli();
-  
-  for (i = 0; i < COFFEE_SECTOR_SIZE / COFFEE_PAGE_SIZE; i++) {
-    for (addr32 = COFFEE_START + (((sector + i) * COFFEE_PAGE_SIZE)
-                                  & ~(COFFEE_PAGE_SIZE - 1)); addr32 < (COFFEE_START + (((sector
-                                                                                          + i + 1) * COFFEE_PAGE_SIZE) & ~(COFFEE_PAGE_SIZE - 1))); addr32
-           += SPM_PAGESIZE) {
-      boot_page_erase(addr32);
+	// Disable interrupts.
+	sreg = SREG;
+	cli();
 
-      boot_spm_busy_wait();
-      
-    }
-  }
-  //RE-enable interrupts
-  boot_rww_enable();
-  SREG = sreg;
+	for (i = 0; i < COFFEE_SECTOR_SIZE / COFFEE_PAGE_SIZE; i++) {
+		for (addr32 = COFFEE_START + (((sector + i) * COFFEE_PAGE_SIZE)
+				& ~(COFFEE_PAGE_SIZE - 1)); addr32 < (COFFEE_START + (((sector
+				+ i + 1) * COFFEE_PAGE_SIZE) & ~(COFFEE_PAGE_SIZE - 1))); addr32
+				+= SPM_PAGESIZE) {
+			boot_page_erase(addr32);
+			boot_spm_busy_wait();
+
+		}
+	}
+	//RE-enable interrupts
+	boot_rww_enable();
+	SREG = sreg;
 #else
-
-  volatile int k = COFFEE_SECTOR_SIZE/COFFEE_PAGE_SIZE;
-  for (i=0;i<COFFEE_SECTOR_SIZE/COFFEE_PAGE_SIZE;i++) {
-    //PRINTF("wriet %d\n", i);
-    avr_flash_write((sector+i)*COFFEE_PAGE_SIZE,0,0);
-  }
+	for (i=0;i<COFFEE_SECTOR_SIZE/COFFEE_PAGE_SIZE;i++) {
+		avr_flash_write((sector+i)*COFFEE_PAGE_SIZE,0,0);
+	}
 #endif
-  
-//#if 0
-#if TESTCOFFEE
 
+#if 0
+#if TESTCOFFEE
 /* Defining TESTCOFFEE is a convenient way of testing a new configuration.
  * It is triggered by an erase of the last sector.
  * Note this routine will be reentered during the test!                     */
 
-/*  if ((sector+i)==COFFEE_PAGES-1) {
+  if ((sector+i)==COFFEE_PAGES-1) {
     int j=(int)(COFFEE_START>>1),k=(int)((COFFEE_START>>1)+(COFFEE_SIZE>>1)),l=(int)(COFFEE_SIZE/1024UL);
     printf_P(PSTR("\nTesting coffee filesystem [0x%08x -> 0x%08x (%uKb)] ..."),j,k,l);
     int r= coffee_file_test();
@@ -533,9 +526,9 @@ void avr_flash_erase(coffee_page_t sector) {
     } else {
       printf_P(PSTR("Passed! :-)\n"));
     }
-    }*/
+  }
 #endif /* TESTCOFFEE */
-//#endif
+#endif
 }
 
 /*httpd-fs routines
@@ -592,9 +585,8 @@ avr_flash_write(CFS_CONF_OFFSET_TYPE addr, uint8_t *buf, CFS_CONF_OFFSET_TYPE si
   uint32_t addr32;
   uint16_t w;
   uint8_t  bb,ba,sreg;
-  PRINTF("avr_flash_write %d\n", addr);
+ 
   /* Disable interrupts, make sure no eeprom write in progress */
-
   sreg = SREG;
   cli();
   eeprom_busy_wait();
