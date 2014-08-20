@@ -42,8 +42,10 @@
 
 
 // using EEPROM for all applications for now
-#define COFFEE_FILES 1
-#define COFFEE_ADDRESS            0x400
+#define COFFEE_FILES 3
+// #define COFFEE_ADDRESS            0x400 // works for eeprom
+#define COFFEE_ADDRESS   0x1f400
+         
 
 /* Platform name, type, and MCU clock rate */
 #define PLATFORM_NAME  "RFA1"
