@@ -99,12 +99,23 @@ CFLAGSNO = -Wall -mmcu=$(MCU) -gdwarf-2 -fno-strict-aliasing \
             -I. -I$(CONTIKI)/core -I$(CONTIKI_CPU) $(USB_INCLUDES) \
             $(CONTIKI_PLAT_DEFS)
 CFLAGS   += $(CFLAGSNO) -O$(OPTI)
+
+#CFLAGS+=-funsigned-char -funsigned-bitfields -DDEBUG -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=$(MCU) -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"
+
+#CFLAGS+= -I$(CONTIKI)/platform/$(TARGET) -I. -I$(CONTIKI)/core -I$(CONTIKI_CPU) $(CONTIKI_PLAT_DEFS)
+
+
 ifndef BOOTLOADER_START
-  BOOTLOADER_START = 0x1F800
+  # 0x3E000 is (byte address) start of NRWW section in ATmega256rfr2, word address, as in datasheet, is 1F000
+  BOOTLOADER_START = 0x3E000
 endif
 
 LDFLAGS  += -mmcu=$(MCU) -Wl,-Map=contiki-$(TARGET).map \
            -Wl,--section-start=.bootloader=$(BOOTLOADER_START)
+
+#LDFLAGS += -Wl,-Map=japp.map -Wl,--start-group -Wl,-lm -Wl,--end-group -Wl,--gc-sections -mrelax -mmcu=$(MCU) -Wl,--section-start=.bootloader=$(BOOTLOADER_START)
+
+
 
 SMALL ?= 1
 
@@ -213,3 +224,5 @@ endif
 symbols.c:
 	cp ${CONTIKI}/tools/empty-symbols.c symbols.c
 	cp ${CONTIKI}/tools/empty-symbols.h symbols.h
+
+        
