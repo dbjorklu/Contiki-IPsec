@@ -48,7 +48,7 @@
 
 #include <contiki.h>
 #include <stdio.h>
-#include "nn.h"
+#include "core/lib/contikiecc/ecc/nn.h"
 
 /**
   * This source code is part of an implementation of RFC 5996, 4301 and 4307.

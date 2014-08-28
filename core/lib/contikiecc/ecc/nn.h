@@ -42,7 +42,7 @@
 
 
 /*---------------------------- 8-bit PROCESSOR -------------------------------*/
-
+#define EIGHT_BIT_PROCESSOR
 #ifdef EIGHT_BIT_PROCESSOR
 
 /* Type definitions */

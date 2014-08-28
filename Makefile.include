@@ -58,14 +58,14 @@ UPPERCASE = _ABCDEFGHIJKLMNOPQRSTUVWXYZ
 TARGET_UPPERCASE := ${strip ${shell echo $(TARGET) | sed y!$(LOWERCASE)!$(UPPERCASE)!}}
 CFLAGS += -DCONTIKI=1 -DCONTIKI_TARGET_$(TARGET_UPPERCASE)=1
 
-include $(CONTIKI)/core/net/rime/Makefile.rime
-include $(CONTIKI)/core/net/mac/Makefile.mac
-SYSTEM  = process.c procinit.c autostart.c elfloader.c profile.c \
-          timetable.c timetable-aggregate.c compower.c serial-line.c
-THREADS = mt.c
-LIBS    = memb.c mmem.c timer.c list.c etimer.c ctimer.c energest.c rtimer.c stimer.c trickle-timer.c \
+#include $(CONTIKI)/core/net/rime/Makefile.rime
+#include $(CONTIKI)/core/net/mac/Makefile.mac
+#SYSTEM  = process.c procinit.c autostart.c elfloader.c profile.c \
+#          timetable.c timetable-aggregate.c compower.c serial-line.c
+#THREADS = mt.c
+#LIBS    = memb.c mmem.c timer.c list.c etimer.c ctimer.c energest.c rtimer.c stimer.c trickle-timer.c \
           print-stats.c ifft.c crc16.c random.c checkpoint.c ringbuf.c settings.c
-DEV     = nullradio.c
+#DEV     = nullradio.c
 
 
 ifdef UIP_CONF_IPV6
@@ -82,19 +82,19 @@ ifdef UIP_CONF_IPV6
 endif # UIP_CONF_IPV6
 
 
-include $(CONTIKI)/core/net/Makefile.uip
-include $(CONTIKI)/core/net/rpl/Makefile.rpl
+#include $(CONTIKI)/core/net/Makefile.uip
+#include $(CONTIKI)/core/net/rpl/Makefile.rpl
 
 
 
-CTK     = ctk.c
-CTKVNC  = $(CTK) ctk-vncserver.c libconio.c vnc-server.c vnc-out.c ctk-vncfont.c
+#CTK     = ctk.c
+#CTKVNC  = $(CTK) ctk-vncserver.c libconio.c vnc-server.c vnc-out.c ctk-vncfont.c
 
-ifndef CONTIKI_NO_NET
-  CONTIKIFILES = $(SYSTEM) $(LIBS) $(NET) $(THREADS) $(DHCP) $(DEV)
-else
-  CONTIKIFILES = $(SYSTEM) $(LIBS) $(THREADS) $(DEV) sicslowpan.c fakeuip.c
-endif
+#ifndef CONTIKI_NO_NET
+#  CONTIKIFILES = $(SYSTEM) $(LIBS) $(NET) $(THREADS) $(DHCP) $(DEV)
+#else
+#  CONTIKIFILES = $(SYSTEM) $(LIBS) $(THREADS) $(DEV) sicslowpan.c fakeuip.c
+#endif
 
 # Dag 
 MODULES += core/sys core/dev core/lib

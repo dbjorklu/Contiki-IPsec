@@ -38,7 +38,7 @@
  */
 
 #include "contiki-conf.h"
-#include "net/uip-udp-packet.h"
+#include "core/net/ip/uip-udp-packet.h"
 #include <string.h>
 
 extern uint16_t uip_slen;
