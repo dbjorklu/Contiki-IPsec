@@ -7,7 +7,7 @@
  *  (http://www.cnit.it).
  *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,7 +35,7 @@
  */
 
 /**
- * \file  contiki-conf.h
+ * \file  platform/seedeye/contiki-conf.h
  * \brief Contiki configuration file for the SEEDEYE port.
  * \author Giovanni Pellerano <giovanni.pellerano@evilaliv3.org>
  * \date   2012-03-21
@@ -75,14 +75,14 @@ typedef uint32_t rtimer_clock_t;
 #define NETSTACK_CONF_MAC                       nullmac_driver
 #define NETSTACK_CONF_RDC                       nullrdc_driver
 #define NETSTACK_CONF_RADIO                     mrf24j40_driver
-#define RIMEADDR_CONF_SIZE                      8
+#define LINKADDR_CONF_SIZE                      8
 #else
 #define NETSTACK_CONF_NETWORK                   rime_driver
 #define NETSTACK_CONF_FRAMER                    framer_802154
 #define NETSTACK_CONF_MAC                       nullmac_driver
 #define NETSTACK_CONF_RDC                       nullrdc_driver
 #define NETSTACK_CONF_RADIO                     mrf24j40_driver
-#define RIMEADDR_CONF_SIZE                      2
+#define LINKADDR_CONF_SIZE                      2
 #endif
 
 #define RDC_CONF_HARDWARE_CSMA                  1
