@@ -1,10 +1,22 @@
-CONTIKI_TARGET_DIRS = . apps net loader
+CONTIKI_TARGET_DIRS = . apps net loader dev
 
 CONTIKI_CORE=contiki-main
 CONTIKI_TARGET_MAIN = ${CONTIKI_CORE}.o
-CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c
+CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c battery-sensor.c sht21-sensor.c sht21.c radio-sensor.c 
+
+#The avr cpu makefile will also add these files if COFFEE_FILES is specified.
+CONTIKI_TARGET_SOURCEFILES += cfs-coffee.c cfs-coffee-arch.c
+ 
+
 #Needed for slip
 CONTIKI_TARGET_SOURCEFILES += button-sensor.c sensors.c slip_uart0.c slip.c
+
+MODULES +=  core/net/ipv6 core/net/ipv4 core/net/rime core/net/mac \
+           core/net core/net/ip core/net/rpl \
+           core/net/mac/contikimac core/net/mac/cxmac \
+           core/net/mac/sicslowmac
+
+
 
 CONTIKIAVR=$(CONTIKI)/cpu/avr
 CONTIKIBOARD=.

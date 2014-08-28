@@ -45,7 +45,7 @@ static int
 value(int type)
 {
 
-  uint16_t h;
+  //uint16_t h;
   //Measuring AVcc might be useful to check on battery condition but on ext power it's always 3v3
   // Table 27-11 in rfr2 datasheet
   //ADMUX = 0;  // AREF as reference

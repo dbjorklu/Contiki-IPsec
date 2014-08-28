@@ -37,13 +37,19 @@
  * \author
  *         David Kopf <dak664@embarqmail.com>
  */
-
 #ifndef CONTIKI_CONF_H_
 #define CONTIKI_CONF_H_
 
+
+// using EEPROM for all applications for now
+//#define COFFEE_FILES 3
+// #define COFFEE_ADDRESS            0x400 // works for eeprom
+#define COFFEE_ADDRESS   0x1f400
+         
+
 /* Platform name, type, and MCU clock rate */
 #define PLATFORM_NAME  "RFA1"
-#define PLATFORM_TYPE  ATMEGA128RFA1
+#define PLATFORM_TYPE  ATMEGA256RFR2
 #ifndef F_CPU
 #define F_CPU          8000000UL
 #endif
@@ -56,7 +62,7 @@
  */
  /* Clock ticks per second */
 #define CLOCK_CONF_SECOND 128
-#if 1
+#if 0
 /* 16 bit counter overflows every ~10 minutes */
 typedef unsigned short clock_time_t;
 #define CLOCK_LT(a,b)  ((signed short)((a)-(b)) < 0)
@@ -112,7 +118,7 @@ typedef unsigned short uip_stats_t;
 
 /* Available watchdog timeouts depend on mcu. Default is WDTO_2S. -1 Disables the watchdog. */
 /* AVR Studio simulator tends to reboot due to clocking the WD 8 times too fast */
-//#define WATCHDOG_CONF_TIMEOUT -1
+#define WATCHDOG_CONF_TIMEOUT -1
 
 /* Debugflow macro, useful for tracing path through mac and radio interrupts */
 //#define DEBUGFLOWSIZE 128
@@ -141,13 +147,14 @@ typedef unsigned short uip_stats_t;
 #define RDC_CONF_HARDWARE_CSMA   1
 /* Allow MCU sleeping between channel checks */
 #define RDC_CONF_MCU_SLEEP         1
-#define UIP_CONF_IPV6 1
+
+#define UIP_CONF_IPV6  1
 
 #if UIP_CONF_IPV6
 #define LINKADDR_CONF_SIZE        8
 #define UIP_CONF_ICMP6            1
 #define UIP_CONF_UDP              1
-#define UIP_CONF_TCP              1
+//#define UIP_CONF_TCP              1
 #define NETSTACK_CONF_NETWORK     sicslowpan_driver
 #define SICSLOWPAN_CONF_COMPRESSION SICSLOWPAN_COMPRESSION_HC06
 #else
@@ -182,6 +189,7 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_TCP_SPLIT       1
 #define UIP_CONF_DHCP_LIGHT      1
 
+#define UIP_CONF_BUFFER_SIZE		240
 
 #if 1 /* No radio cycling */
 
